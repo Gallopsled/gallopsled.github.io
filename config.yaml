@@ -1,0 +1,11 @@
+baseURL: 'https://blog.pwntools.com/'
+languageCode: en-us
+title: Pwntools Blog
+theme: beautifulhugo
+pygmentsCodeFences: true
+pygmentsUseClasses: true
+params:
+  homeInfoParams:
+    Title: 'Hi there :wave:'
+    Content: 'Can be Info, links, about...'
+
