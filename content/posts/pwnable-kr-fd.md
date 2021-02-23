@@ -2,13 +2,10 @@
 title: "Pwnable.kr: fd"
 date: 2021-02-02T06:57:42-06:00
 draft: false
-summary: "Basic introduction to Pwntools with a very simple vulnerability"
+subtitle: "Using pwntools to solve a simple challenge that does not require binary exploitation"
 ---
 
-:toc:
-{{< details "This is the details title (click to expand)" >}}
-This is the content (hidden until clicked).
-{{< /details >}}
+<!--more-->
 
 ## Background
 
@@ -21,7 +18,7 @@ This is the content (hidden until clicked).
 
 For this challenge, we are provieded a binary `fd` and the corresponding source code, `fd.c`.
 
-```c {linenos=table,hl_lines=[8,"15-17"]}
+```c {linenos=table,hl_lines=[10, 12, 15]}
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +55,7 @@ We want to send information to `stdin`, so we want the `read()` call to use file
 
 The `fd` binary takes a single command-line argument, which is the file descriptor to read from.  It subtracts `0x1234` from the file descriptor, and then reads from it and compares to the `"LETMEWIN"` string.
 
-```c
+```c {hl_lines=[1, 3]}
     int fd = atoi( argv[1] ) - 0x1234;
     int len = 0;
     len = read(fd, buf, 32);
@@ -73,10 +70,16 @@ In order to have data received, we need to provide a value that is 0x1234 higher
 Generally, I reccomend using `pwn template` to generate a template for exploitation.
 
 ```sh
-$ pwn template -q --host pwnable.kr --port 2222 --user fd --password guest --path /home/fd/fd | tee exploit.py
+$ pwn template -q \
+    --host pwnable.kr \
+    --port 2222 \
+    --user fd \
+    --password guest \
+    --path /home/fd/fd \
+    > exploit.py
 ```
 
-This will connect to the remote server and download the binary to the local directory, as well as create a template script for running the binary locally, as well as via running it remotely on the `pwnable.kr` server via SSH.
+This will connect to the remote server and download the binary at the path provided by `--path` to the local directory, as well as create a template script for running the binary locally, as well as via running it remotely on the `pwnable.kr` server via SSH.
 
 For the sake of showing the template that is generated, you should see something like this what is shown below.
 

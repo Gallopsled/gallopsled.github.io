@@ -1,9 +1,25 @@
 baseURL: 'https://blog.pwntools.com/'
 languageCode: en-us
 title: Pwntools Blog
+
 theme: beautifulhugo
-pygmentsCodeFences: true
-pygmentsUseClasses: true
+# theme: PaperMod
+
+PygmentsCodeFences: true
+PygmentsUseClasses: true
+
+PygmentsUseClassic: false
+
+blackfriday:
+  plainIDAnchors: true
+
+markup:
+  tableOfContents:
+    endLevel: 1
+    ordered: false
+    startLevel: 1
+
+
 params:
   homeInfoParams:
     Title: 'Hi there :wave:'
