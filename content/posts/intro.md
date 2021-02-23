@@ -7,3 +7,5 @@ draft: true
 # Example Post
 
 This is a test post to make sure that Hugo generation is working correctly.
+
+This is an update to trigger Github Actions.
