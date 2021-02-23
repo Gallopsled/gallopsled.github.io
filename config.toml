@@ -1,0 +1,4 @@
+baseURL = "https://blog.pwntools.com/"
+languageCode = "en-us"
+title = "Pwntools Blog"
+theme = "PaperMod"
