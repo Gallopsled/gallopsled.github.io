@@ -11,6 +11,8 @@ author: "<a href='https://twitter.com/ebeip90'>ebeip90</a>"
 
 * `pwn template` command-line utility for generating exploit scripts
 * Magic `args` for setting runtime arguments
+* Processes via `process` and `pwnlib.ssh` 
+* Basic information about file descriptors
 
 <!--more-->
 
