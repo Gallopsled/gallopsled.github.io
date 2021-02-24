@@ -242,7 +242,7 @@ First, a local copy of the binary is loaded into memory, to set `context.binary`
 
 ```text
 $ python exploit.py
-[*] '/Users/zachriggle/ctf-solutions/pwnable.kr/toddler/fd/fd'
+[*] '/home/pwntools/pwntools/fd/fd'
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
