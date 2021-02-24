@@ -6,4 +6,4 @@
 	url = https://github.com/adityatelange/hugo-PaperMod.git
 [submodule "themes/beautifulhugo"]
 	path = themes/beautifulhugo
-	url = https://github.com/halogenica/beautifulhugo.git
+	url = https://github.com/heapcrash/beautifulhugo.git

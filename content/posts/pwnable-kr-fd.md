@@ -3,22 +3,22 @@ title: "Pwnable.kr: fd"
 date: 2021-02-02T06:57:42-06:00
 draft: false
 subtitle: "Using pwntools to solve a simple challenge that does not require binary exploitation"
+tags: ["pwn template", "file-descriptor", "pwnable.kr", "easy"]
+author: "<a href='https://twitter.com/ebeip90'>ebeip90</a>"
 ---
-
-<!--more-->
-
-## Background
 
 [Pwnable.kr](Pwnable.kr]) is a website that offers exploitable CTF challenges, with four difficulty categories.  Today, we'll be looking at a very simple challenge, `fd`.  The following Pwntools features are demonstrated hereL
 
 * `pwn template` command-line utility for generating exploit scripts
 * Magic `args` for setting runtime arguments
 
+<!--more-->
+
 ## Getting Started
 
 For this challenge, we are provieded a binary `fd` and the corresponding source code, `fd.c`.
 
-```c {linenos=table,hl_lines=[10, 12, 15]}
+```c {linenos=table,hl_lines=[10, 13, 15]}
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,15 +61,13 @@ The `fd` binary takes a single command-line argument, which is the file descript
     len = read(fd, buf, 32);
 ```
 
-
-
 In order to have data received, we need to provide a value that is 0x1234 higher than the file descriptor we want to send data to.  Since `STDIN_FILENO==0`, we want to provide `0x1234`, such that `0x1234-0x1234==0==STDIN_FILENO`.
 
 ## Pwntools Script Templates
 
-Generally, I reccomend using `pwn template` to generate a template for exploitation.
+Generally, I reccomend using `pwn template` ([documentation](https://docs.pwntools.com/en/latest/commandline.html#pwn-template)) to generate a template for exploitation.
 
-```sh
+```bash
 $ pwn template -q \
     --host pwnable.kr \
     --port 2222 \
@@ -78,6 +76,8 @@ $ pwn template -q \
     --path /home/fd/fd \
     > exploit.py
 ```
+
+>  If the command `pwn` is not available to you, you may need to put ~/.local/bin into your `$PATH` environment variable
 
 This will connect to the remote server and download the binary at the path provided by `--path` to the local directory, as well as create a template script for running the binary locally, as well as via running it remotely on the `pwnable.kr` server via SSH.
 

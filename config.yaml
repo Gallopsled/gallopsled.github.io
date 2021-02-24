@@ -19,9 +19,30 @@ markup:
     ordered: false
     startLevel: 1
 
+author: 
+  name: "Team Gallopsled"
+  website: "https://github.com/Gallopsled"
+  github: Gallopsled/pwntools#readme
+  twitter: Pwntools
+  discord: 96VA2zvjCB
 
 params:
+
+  since: 2021
   homeInfoParams:
     Title: 'Hi there :wave:'
     Content: 'Can be Info, links, about...'
+  Logo: "/img/logo.png"
+  readingTime: true
+  wordCount: true
+  # hideAuthor: true
+  gcse: a6e761131baa51ced
 
+Menus:
+  main:
+      - name: Docs
+        URL: https://docs.pwntools.com
+      - name: Tutorials
+        URL: https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md
+      - name: Discord
+        URL: https://discord.gg/96VA2zvjCB
