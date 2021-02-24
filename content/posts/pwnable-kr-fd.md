@@ -1,6 +1,6 @@
 ---
 title: "Pwnable.kr: fd"
-date: 2021-02-02T06:57:42-06:00
+date: 2021-02-23
 draft: false
 subtitle: "Using pwntools to solve a simple challenge that does not require binary exploitation"
 tags: ["pwn template", "file-descriptor", "pwnable.kr", "easy"]
