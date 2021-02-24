@@ -180,7 +180,7 @@
     b&#39;Flag{This_Is_The_Flag}\n&#39;
 [+] Flag{This_Is_The_Flag}
 </code></pre></div><h3 id=running-the-exploit-remotely>Running the Exploit Remotely</h3><p>Now we can run the exploit, and see what happens! The last line is the flag.</p><p>First, a local copy of the binary is loaded into memory, to set <code>context.binary</code> so that everything is set up for Intel i386 architecture. We can see some information about the binary printed out</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>$ python exploit.py
-[*] &#39;/Users/zachriggle/ctf-solutions/pwnable.kr/toddler/fd/fd&#39;
+[*] &#39;/home/pwntools/pwntools/fd/fd&#39;
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
