@@ -28,7 +28,7 @@ author:
 
 params:
 
-  since: 2021
+  # since: 2021
   homeInfoParams:
     Title: 'Hi there :wave:'
     Content: 'Can be Info, links, about...'
