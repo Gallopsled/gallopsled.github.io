@@ -1,7 +1,7 @@
 ---
 title: "Simple GOT Overwrite"
 date: 2021-02-23T20:22:21-05:00
-draft: true
+draft: false
 subtitle: "Exploiting a basic vulnerability involving a GOT overwrite"
 tags: ["got", "aslr", "easy", "elf", "libc"]
 author: "<a href='https://twitter.com/ebeip90'>ebeip90</a>"
