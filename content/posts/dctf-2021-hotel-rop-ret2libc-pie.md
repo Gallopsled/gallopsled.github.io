@@ -247,3 +247,7 @@ log.success(f'Enjoy your shell!')
 p.clean()
 p.interactive()
 ```
+
+---
+
+This post was contributed by Elma. Check him out on his [blog](https://caprinux.github.io)!
