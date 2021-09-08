@@ -17,7 +17,7 @@ Today, we will be looking at a pwn challenge from **dCTF 2021** which features r
 ---
 > They say programmers' dream is California. And because they need somewhere to stay, we've built a hotel!
 >
-> Attachments: [hotel_rop](/content/files/hotel_rop)
+> Attachments: [hotel_rop](/files/hotel_rop)
 
 <br>
 
