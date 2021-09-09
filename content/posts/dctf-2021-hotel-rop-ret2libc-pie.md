@@ -19,6 +19,7 @@ Today, we will be looking at a pwn challenge from **dCTF 2021** which features r
 >
 > Attachments: [hotel_rop](/files/hotel_rop)
 
+
 <br>
 
 ## Getting Started
